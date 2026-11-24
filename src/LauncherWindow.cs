@@ -148,7 +148,7 @@ sealed partial class LauncherWindow : Window
         placeholder.FontSize = 24;
         placeholder.Foreground = new SolidColorBrush(Color.FromRgb(154, 154, 165));
         placeholder.VerticalAlignment = VerticalAlignment.Center;
-        placeholder.Margin = new Thickness(5, 0, 0, 0);
+        placeholder.Margin = new Thickness(13, 0, 0, 0);
         placeholder.IsHitTestVisible = false;
         Grid.SetColumn(placeholder, 1);
         searchBox.Children.Add(placeholder);
@@ -225,7 +225,7 @@ sealed partial class LauncherWindow : Window
         clipboard.Changed += () => Dispatcher.InvokeAsync(async () => { if (history && IsVisible && !editing) await UpdateResults(); });
         clipboard.Status += message => Dispatcher.InvokeAsync(() => { status.Text = message; if (message.Length > 0) footer.Text = message.Length > 54 ? message[..54] + "…" : message; else footer.Text = DeviceSync?.HasPeer == true ? L.Text("Lokal gespeichert · Gerätefreigabe aktiv") : L.Text("Nur auf diesem Rechner"); });
     }
-    static FontFamily ChooseFont() => new("Segoe UI Variable Text, Segoe UI");
+    static FontFamily ChooseFont() => new(new Uri("pack://application:,,,/"), "./assets/fonts/#Inter");
     static void Add(Grid parent, UIElement element, int row)
     {
         Grid.SetRow(element, row);
@@ -637,6 +637,8 @@ sealed partial class LauncherWindow : Window
         bool englishLanguage = prefs.Language == "en" && L.Language == "en" && Preferences.Load(root).Language == "en" && VisualChildren<TextBlock>(settings).Any(t => t.Text == "Language");
         Key(System.Windows.Input.Key.Escape);
         bool hidden = !IsVisible;
+        bool bundledFont = new Typeface(FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal).TryGetGlyphTypeface(out var glyphs) && glyphs.FontUri.OriginalString.Contains("assets/fonts/", StringComparison.OrdinalIgnoreCase);
+        bool placeholderClearOfCaret = placeholder.Margin.Left >= input.Padding.Left + 8;
         return new
         {
             ImmediateHistorySelection = immediate,
@@ -656,7 +658,9 @@ sealed partial class LauncherWindow : Window
             GermanLanguageChoice = germanLanguage,
             EnglishLanguageChoice = englishLanguage,
             EscapeHides = hidden,
-            Passed = immediate && first && entered && down && up && tabNavigates && settingsExclusive && tabs && noTyping && choiceCancelled && choiceApplied && cancelSheet && empty && emptyFits && germanLanguage && englishLanguage && hidden
+            BundledFont = bundledFont,
+            PlaceholderClearOfCaret = placeholderClearOfCaret,
+            Passed = immediate && first && entered && down && up && tabNavigates && settingsExclusive && tabs && noTyping && choiceCancelled && choiceApplied && cancelSheet && empty && emptyFits && germanLanguage && englishLanguage && hidden && bundledFont && placeholderClearOfCaret
         };
     }
     public async Task RenderPreview(string path, bool clipboardMode, int selected = 0, bool empty = false)

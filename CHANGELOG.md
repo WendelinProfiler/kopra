@@ -6,6 +6,7 @@
 - Language changes apply immediately and stay on each device.
 - Fix the clipped search icon and hint when search returns no results.
 - Add native Windows and Mac screenshots with example content.
+- Keep the search placeholder clear of the caret and bundle Inter for consistent Windows typography.
 
 ## 1.0.0 beta 3
 
