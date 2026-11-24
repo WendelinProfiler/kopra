@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0 beta 2
+
+- Pair a Mac by entering a six-digit code. Kopra finds the Windows PC on the local network.
+- Codes expire after five minutes, work once and allow at most five attempts.
+- A password-authenticated exchange protects the pairing link. Both devices still require confirmation.
+- QR scanning and QR-image import remain available as alternatives.
 ## 1.0.0 beta 1
 
 - Local app and file search with clipboard history on Windows and Mac.
