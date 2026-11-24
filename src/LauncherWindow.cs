@@ -628,6 +628,13 @@ sealed partial class LauncherWindow : Window
         bool empty = emptyState.IsVisible;
         OpenMode(false, false); input.Text = "No-result-" + Guid.NewGuid(); await UpdateResults(); UpdateLayout();
         bool emptyFits = VisualChildren<FrameworkElement>(emptyState).Where(x => x is Image or TextBlock).All(x => { var bounds = x.TransformToAncestor(emptyState).TransformBounds(new Rect(x.RenderSize)); return bounds.Top >= 0 && bounds.Bottom <= emptyState.ActualHeight + 1; });
+        L.Use("en"); prefs.Language = "en"; settingsTab = 0; ShowSettings(); UpdateLayout();
+        VisualChildren<Button>(settings).First(b => b.Content?.ToString() == "English").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); UpdateLayout();
+        VisualChildren<Button>(confirmation!).First(b => b.Content?.ToString()?.Trim(' ', '✓') == "Deutsch").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); UpdateLayout();
+        bool germanLanguage = prefs.Language == "de" && L.Language == "de" && Preferences.Load(root).Language == "de" && VisualChildren<TextBlock>(settings).Any(t => t.Text == "Sprache");
+        VisualChildren<Button>(settings).First(b => b.Content?.ToString() == "Deutsch").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); UpdateLayout();
+        VisualChildren<Button>(confirmation!).First(b => b.Content?.ToString()?.Trim(' ', '✓') == "English").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); UpdateLayout();
+        bool englishLanguage = prefs.Language == "en" && L.Language == "en" && Preferences.Load(root).Language == "en" && VisualChildren<TextBlock>(settings).Any(t => t.Text == "Language");
         Key(System.Windows.Input.Key.Escape);
         bool hidden = !IsVisible;
         return new
@@ -646,8 +653,10 @@ sealed partial class LauncherWindow : Window
             EscapeCancelsSheet = cancelSheet,
             EmptyState = empty,
             EmptyStateFits = emptyFits,
+            GermanLanguageChoice = germanLanguage,
+            EnglishLanguageChoice = englishLanguage,
             EscapeHides = hidden,
-            Passed = immediate && first && entered && down && up && tabNavigates && settingsExclusive && tabs && noTyping && choiceCancelled && choiceApplied && cancelSheet && empty && emptyFits && hidden
+            Passed = immediate && first && entered && down && up && tabNavigates && settingsExclusive && tabs && noTyping && choiceCancelled && choiceApplied && cancelSheet && empty && emptyFits && germanLanguage && englishLanguage && hidden
         };
     }
     public async Task RenderPreview(string path, bool clipboardMode, int selected = 0, bool empty = false)
