@@ -34,7 +34,10 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: windows-package
-          path: artifacts/*
+          path: |
+            artifacts/*.zip
+            artifacts/*.exe
+            artifacts/*SHA256SUMS.txt
   mac:
     needs: windows
     runs-on: macos-15
@@ -53,4 +56,7 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: mac-package
-          path: artifacts/*
+          path: |
+            artifacts/*.zip
+            artifacts/*.exe
+            artifacts/*SHA256SUMS.txt

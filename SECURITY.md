@@ -10,4 +10,4 @@ Windows networking is optional. An unpaired installation does not listen for cli
 
 Local history is not additionally encrypted at rest. Removing history does not guarantee that the operating system, filesystem snapshots or backups have erased every previous byte.
 
-Use GitHub's private vulnerability reporting to report security issues. Include the app version and the steps needed to reproduce the issue. Do not include clipboard contents, pairing links or device keys.
+Report suspected vulnerabilities privately to the repository maintainer. Include the app version and the steps needed to reproduce the issue. Do not post clipboard contents, pairing links or device keys in a public issue.
