@@ -1,0 +1,15 @@
+global using System.IO;
+global using System.Windows;
+global using System.Windows.Controls;
+global using System.Windows.Media;
+global using Application = System.Windows.Application;
+global using Clipboard = System.Windows.Clipboard;
+global using DataObject = System.Windows.DataObject;
+global using TextBox = System.Windows.Controls.TextBox;
+global using Button = System.Windows.Controls.Button;
+global using ListBox = System.Windows.Controls.ListBox;
+global using Color = System.Windows.Media.Color;
+global using Brushes = System.Windows.Media.Brushes;
+global using Point = System.Windows.Point;
+global using Size = System.Windows.Size;
+global using Image = System.Windows.Controls.Image;

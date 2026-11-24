@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleExecutable</key><string>Kopra</string>
+<key>CFBundleIdentifier</key><string>app.kopra.desktop</string>
+<key>CFBundleName</key><string>Kopra</string>
+<key>CFBundleDisplayName</key><string>Kopra</string>
+<key>CFBundleIconFile</key><string>AppIcon</string>
+<key>CFBundleShortVersionString</key><string>1.0.0</string>
+<key>CFBundleVersion</key><string>1001</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>LSMinimumSystemVersion</key><string>13.0</string>
+<key>LSUIElement</key><true/>
+<key>NSHighResolutionCapable</key><true/>
+<key>NSLocalNetworkUsageDescription</key><string>Teilt deine Zwischenablage verschlüsselt mit deinem gekoppelten Windows-Rechner.</string>
+<key>NSCameraUsageDescription</key><string>Scant den Kopplungscode deines Windows-Rechners. Kopra speichert keine Kamerabilder.</string>
+<key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>Kopra pairing</string><key>CFBundleURLSchemes</key><array><string>kopra</string></array></dict></array>
+</dict></plist>
