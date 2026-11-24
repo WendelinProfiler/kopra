@@ -6,7 +6,7 @@ $target=Join-Path $env:LOCALAPPDATA 'Programs/Kopra'
 New-Item -ItemType Directory -Path $target -Force | Out-Null
 $running=Get-CimInstance Win32_Process -Filter "Name='Kopra.exe'" | Where-Object ExecutablePath -eq (Join-Path $target 'Kopra.exe')
 if($running){throw 'Exit Kopra from its tray menu before updating; clipboard copies may still be in progress.'}
-Get-ChildItem -LiteralPath $source -File | Where-Object Extension -in '.exe','.dll','.json' | ForEach-Object {Copy-Item -LiteralPath $_.FullName -Destination $target -Force}
+Get-ChildItem -LiteralPath $source -File | Where-Object { $_.Extension -in '.exe','.dll' -or $_.Name -in 'Kopra.deps.json','Kopra.runtimeconfig.json' } | ForEach-Object {Copy-Item -LiteralPath $_.FullName -Destination $target -Force}
 foreach($folder in @('de','en','runtimes','assets')){if(Test-Path -LiteralPath (Join-Path $source $folder)){Copy-Item -LiteralPath (Join-Path $source $folder) -Destination $target -Recurse -Force}}
 $shell=New-Object -ComObject WScript.Shell
 $shortcut=$shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Programs')) 'Kopra.lnk'))

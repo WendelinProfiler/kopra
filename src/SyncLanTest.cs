@@ -11,7 +11,7 @@ static class SyncLanTest
         using var clipboard = new ClipboardService(store, prefs);
         DeviceSync.ExportTestPairing(root, Path.Combine(root, "pairing.txt"));
         using var sync = new DeviceSync(root, store, clipboard, prefs);
-        store.AddText("IslandSync Test Windows → Mac");
+        store.AddText("Kopra Test Windows → Mac");
         store.AddImage(Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4GQAAAAASUVORK5CYII="), 1048576);
         string source = Path.Combine(root, "source", "Testordner");
         Directory.CreateDirectory(Path.Combine(source, "Leer"));
@@ -24,7 +24,7 @@ static class SyncLanTest
             SyncConfiguration state = JsonSerializer.Deserialize<SyncConfiguration>(File.ReadAllText(Path.Combine(root, "devices.json")))!;
             if (incoming.Count == 3 && state.Sent.Count >= 3)
             {
-                bool actual = incoming.Any(x => x.Kind == "text" && x.Text == "IslandSync Test Mac → Windows") && incoming.Any(x => x.Kind == "image") && incoming.Any(x => x.Kind == "files" && File.ReadAllText(Path.Combine(x.Files[0], "Notiz.txt")) == "Mac test file" && Directory.Exists(Path.Combine(x.Files[0], "Leer")));
+                bool actual = incoming.Any(x => x.Kind == "text" && x.Text == "Kopra Test Mac → Windows") && incoming.Any(x => x.Kind == "image") && incoming.Any(x => x.Kind == "files" && File.ReadAllText(Path.Combine(x.Files[0], "Notiz.txt")) == "Mac test file" && Directory.Exists(Path.Combine(x.Files[0], "Leer")));
                 Thread.Sleep(1500);
                 File.WriteAllText(Path.Combine(root, "result.json"), JsonSerializer.Serialize(new
                 {

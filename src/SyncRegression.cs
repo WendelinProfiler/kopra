@@ -33,6 +33,10 @@ static class SyncRegression
         Check(rejected, "tampering rejected");
         var sample = new SharedClip("synthetic-test", "files", "Testordner", "", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), [new("Dokumente", true, ""), new("Dokumente/Notiz.txt", false, Convert.ToBase64String(text)), new("Dokumente/Leer", true, "")]);
         SyncWire.Check(sample);
+        rejected = false;
+        try { SyncWire.Check(sample with { Files = [new("Bad.txt", false, "!invalid!")] }); }
+        catch (IOException) { rejected = true; }
+        Check(rejected, "invalid base64 rejected before storage");
         foreach (var bad in new[] { "../outside", "/absolute", "C:/drive", "a\\b", "CON.txt", "a/../b", "a/", "a.", "COM1" })
         {
             rejected = false;

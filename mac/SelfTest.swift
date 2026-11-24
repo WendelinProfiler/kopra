@@ -41,7 +41,7 @@ import Vision
 func lanSelfTest(_ pairFile:String) throws {
     let code=try String(contentsOfFile:pairFile,encoding:.utf8).trimmingCharacters(in:.whitespacesAndNewlines);guard code.hasPrefix("IS1."),let bytes=Data(base64Encoded:String(code.dropFirst(4))) else{throw SharedError.invalid};let pair=try JSONDecoder().decode(Pairing.self,from:bytes)
     let root=FileManager.default.temporaryDirectory.appendingPathComponent("Kopra-lan-test-"+uniqueID());let history=MacHistory(root:root);history.preferences.reserveMB=0;defer{try? FileManager.default.removeItem(at:root)}
-    let text=SharedClip(id:uniqueID(),kind:"text",title:"Mac-Test",text:"IslandSync Test Mac → Windows",created:milliseconds(),files:[])
+    let text=SharedClip(id:uniqueID(),kind:"text",title:"Mac-Test",text:"Kopra Test Mac → Windows",created:milliseconds(),files:[])
     let image=SharedClip(id:uniqueID(),kind:"image",title:"Testbild",text:"",created:milliseconds(),files:[SharedFile(path:"Bild.png",directory:false,data:"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a4GQAAAAASUVORK5CYII=")])
     let folder=SharedClip(id:uniqueID(),kind:"files",title:"Testordner",text:"",created:milliseconds(),files:[SharedFile(path:"Testordner",directory:true,data:""),SharedFile(path:"Testordner/Leer",directory:true,data:""),SharedFile(path:"Testordner/Notiz.txt",directory:false,data:Data("Mac test file".utf8).base64EncodedString())])
     let outgoing=[text,image,folder];var sent=0;var ack="";var received=Set<String>();let deadline=Date().addingTimeInterval(80)
@@ -49,7 +49,7 @@ func lanSelfTest(_ pairFile:String) throws {
         let packet=SyncPacket(version:1,device:history.preferences.device,id:uniqueID(),issued:milliseconds(),kind:"exchange",ack:ack,entry:sent<outgoing.count ? outgoing[sent]:nil);let response=try SharedProtocol.exchange(packet,pairing:pair)
         if sent<outgoing.count,response.ack==outgoing[sent].id{sent+=1}
         if let clip=response.entry{if received.insert(clip.id).inserted{try history.insert(clip,origin:"Windows")};ack=clip.id}
-        if received.count==3 && sent==3{let final=SyncPacket(version:1,device:history.preferences.device,id:uniqueID(),issued:milliseconds(),kind:"exchange",ack:ack,entry:nil);_ = try SharedProtocol.exchange(final,pairing:pair);let actual=history.entries.contains{$0.text=="IslandSync Test Windows → Mac"} && history.entries.contains{entry in entry.kind=="files" && (try? String(contentsOfFile:entry.paths[0]+"/Notiz.txt",encoding:.utf8))=="Windows test file" && FileManager.default.fileExists(atPath:entry.paths[0]+"/Leer")};guard actual else{throw SharedError.invalid};print("PASS LAN: 3 MAC_TO_WINDOWS, 3 WINDOWS_TO_MAC, ACTUAL_FILES_AND_EMPTY_FOLDERS");return}
+        if received.count==3 && sent==3{let final=SyncPacket(version:1,device:history.preferences.device,id:uniqueID(),issued:milliseconds(),kind:"exchange",ack:ack,entry:nil);_ = try SharedProtocol.exchange(final,pairing:pair);let actual=history.entries.contains{$0.text=="Kopra Test Windows → Mac"} && history.entries.contains{entry in entry.kind=="files" && (try? String(contentsOfFile:entry.paths[0]+"/Notiz.txt",encoding:.utf8))=="Windows test file" && FileManager.default.fileExists(atPath:entry.paths[0]+"/Leer")};guard actual else{throw SharedError.invalid};print("PASS LAN: 3 MAC_TO_WINDOWS, 3 WINDOWS_TO_MAC, ACTUAL_FILES_AND_EMPTY_FOLDERS");return}
         Thread.sleep(forTimeInterval:0.3)
     };throw SharedError.unavailable
 }

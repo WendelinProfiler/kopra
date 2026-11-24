@@ -63,7 +63,7 @@ static class SyncWire
     public static string EntryId(ClipEntry entry) => entry.Id + "-" + new DateTimeOffset(entry.Created).ToUnixTimeMilliseconds();
     public static void Check(SharedClip clip)
     {
-        if (clip.Id.Length is < 1 or > 100 || clip.Title.Length > 500 || clip.Text.Length > 1048576 || clip.Files.Count > 2000 || clip.Kind is not ("text" or "image" or "files"))
+        if (clip.Id.Length is < 1 or > 100 || clip.Title.Length > 500 || Encoding.UTF8.GetByteCount(clip.Text) > 1048576 || clip.Files.Count > 2000 || clip.Kind is not ("text" or "image" or "files"))
             throw new IOException("Ungültiger Eintrag");
         long size = Encoding.UTF8.GetByteCount(clip.Text);
         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -77,6 +77,11 @@ static class SyncWire
             size = checked(size + (long)f.Data.Length * 3 / 4);
             if (size > MaxContent)
                 throw new IOException("Eintrag ist größer als 32 MB");
+            if (!f.Directory)
+            {
+                try { _ = Convert.FromBase64String(f.Data); }
+                catch (FormatException) { throw new IOException("Ungültiger Dateiinhalt"); }
+            }
         }
         if (clip.Kind == "text" && clip.Files.Count != 0 || clip.Kind == "image" && (clip.Files.Count != 1 || clip.Files[0].Directory) || clip.Kind == "files" && clip.Files.Count == 0)
             throw new IOException("Unvollständiger Eintrag");
@@ -187,9 +192,6 @@ sealed class DeviceSync : IDisposable
     {
         if (HasPeer)
             throw new IOException("Bitte zuerst die bestehende Verbindung aufheben.");
-        Start();
-        if (listener == null)
-            throw new IOException("Die Geräteverbindung konnte nicht gestartet werden.");
         var addresses = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
             .Where(adapter => adapter.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up &&
                 adapter.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Loopback &&
@@ -201,6 +203,9 @@ sealed class DeviceSync : IDisposable
             .Distinct().ToArray();
         if (addresses.Length == 0)
             throw new IOException("Kein lokales Netzwerk gefunden.");
+        Start();
+        if (listener == null)
+            throw new IOException("Die Geräteverbindung konnte nicht gestartet werden.");
         return Pairing.Begin(addresses[0].ToString());
     }
     void InstallKey(byte[] secret, string peer)

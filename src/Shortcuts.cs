@@ -82,6 +82,7 @@ sealed class Shortcuts : IDisposable
         int old = history ? historyId : searchId;
         if (windowsKey)
         {
+            if (!windows.IsInstalled) { error = "Die Windows-Taste konnte nicht registriert werden. Das bisherige Kürzel bleibt erhalten."; return false; }
             if (old != 0)
                 Native.UnregisterHotKey(hwnd, old);
             searchId = 0;
@@ -105,7 +106,7 @@ sealed class Shortcuts : IDisposable
     }
     public bool Handle(int id)
     {
-        if (id != searchId && id != historyId)
+        if (id == 0 || id != searchId && id != historyId)
             return false;
         bool history = id == historyId;
         if (Recording)
