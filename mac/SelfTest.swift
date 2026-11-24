@@ -24,10 +24,11 @@ import Vision
         let area=screen.visibleFrame;panel.setFrame(NSRect(x:area.midX-370,y:area.midY-230,width:740,height:460),display:true);panel.makeKeyAndOrderFront(nil);model.beginFocusOwnership()
         defer{model.hide()}
         for _ in 0..<3{finder.activate(options:[]);try await Task.sleep(nanoseconds:400_000_000);guard NSApp.isActive,panel.isKeyWindow else{print("FOCUS_FAILED_EXTERNAL_RECOVERY",NSApp.isActive,panel.isKeyWindow);throw SharedError.invalid}}
+        model.previousApp=finder;model.open(true);guard model.previousApp?.processIdentifier==finder.processIdentifier else{print("FOCUS_FAILED_PASTE_TARGET");throw SharedError.invalid}
         let dialog=LauncherPanel(contentRect:NSRect(x:area.midX-120,y:area.midY-40,width:240,height:80),styleMask:[.titled],backing:.buffered,defer:false);let field=NSTextField(string:"Eigener Testdialog");dialog.contentView=field;panel.addChildWindow(dialog,ordered:.above);dialog.makeKeyAndOrderFront(nil);dialog.makeFirstResponder(field);try await Task.sleep(nanoseconds:300_000_000);guard dialog.isKeyWindow else{print("FOCUS_FAILED_OWN_DIALOG");throw SharedError.invalid};panel.removeChildWindow(dialog);dialog.orderOut(nil);model.ensureFocusOwnership();guard panel.isKeyWindow else{print("FOCUS_FAILED_DIALOG_RETURN");throw SharedError.invalid}
         let picker=NSOpenPanel();picker.beginSheetModal(for:panel){_ in};try await Task.sleep(nanoseconds:300_000_000);model.ensureFocusOwnership();guard panel.attachedSheet != nil else{print("FOCUS_FAILED_FILE_PICKER");throw SharedError.invalid};picker.cancel(nil);try await Task.sleep(nanoseconds:200_000_000);model.ensureFocusOwnership();guard panel.isKeyWindow else{print("FOCUS_FAILED_DIALOG_RETURN");throw SharedError.invalid}
         model.hide();finder.activate(options:[]);try await Task.sleep(nanoseconds:300_000_000);guard !panel.isVisible,NSWorkspace.shared.frontmostApplication?.bundleIdentifier=="com.apple.finder" else{print("FOCUS_FAILED_HIDE_RELEASE");throw SharedError.invalid}
-        print("PASS FOCUS: THREE_EXTERNAL_LOSSES, OWNED_DIALOG, FILE_PICKER, RETURN_AFTER_DIALOG, RELEASE_WHEN_HIDDEN")
+        print("PASS FOCUS: THREE_EXTERNAL_LOSSES, OWNED_DIALOG, FILE_PICKER, RETURN_AFTER_DIALOG, RELEASE_WHEN_HIDDEN, PASTE_TARGET_PRESERVED")
     }else{throw SharedError.unavailable}
     }
     Task { @MainActor in

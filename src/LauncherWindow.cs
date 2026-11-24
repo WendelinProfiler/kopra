@@ -242,6 +242,7 @@ sealed partial class LauncherWindow : Window
     static ViewItem HistoryAction() => new("Verlauf", "Texte, Bilder, Dateien und Ordner", "", LauncherAction.History, Icons.ClipboardSymbol());
     public void OpenMode(bool clipboardMode, bool captureTarget = true)
     {
+        if (IsVisible && !IsEnabled) return;
         DismissConfirmation();
         activating = !previewMode;
         if (captureTarget)
