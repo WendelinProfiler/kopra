@@ -79,7 +79,7 @@ sealed class ClipboardService : IDisposable
                 {
                     if ((long)bitmap.PixelWidth * bitmap.PixelHeight > 64000000)
                     {
-                        Status?.Invoke("Bild zu groß für den Verlauf");
+                        Status?.Invoke(L.Text("Bild zu groß für den Verlauf"));
                         return;
                     }
                     var encoder = new PngBitmapEncoder();
@@ -103,10 +103,10 @@ sealed class ClipboardService : IDisposable
                 ClipEntry? captured = null;
                 if (files != null)
                 {
-                    Status?.Invoke("Dateien werden gesichert …");
-                    captured = await Task.Run(() => store.AddFiles(files, limit, (current, total) => { if (total > 0) Status?.Invoke($"Dateien sichern · {Math.Min(100, current * 100 / total)} %"); }, stop.Token));
+                    Status?.Invoke(L.Text("Dateien werden gesichert …"));
+                    captured = await Task.Run(() => store.AddFiles(files, limit, (current, total) => { if (total > 0) Status?.Invoke(L.Format("Dateien sichern \u00B7 {0} %", Math.Min(100, current * 100 / total))); }, stop.Token));
                     foreach (string path in files)
-                        store.RecordRecent(new(Path.GetFileName(Path.TrimEndingDirectorySeparator(path)), path, Directory.Exists(path) ? "Ordner" : "Datei", "Zuletzt kopiert"));
+                        store.RecordRecent(new(Path.GetFileName(Path.TrimEndingDirectorySeparator(path)), path, Directory.Exists(path) ? "Ordner" : "Datei", L.Text("Zuletzt kopiert")));
                 }
                 else if (image != null)
                     captured = await Task.Run(() => store.AddImage(image, limit));
@@ -114,7 +114,7 @@ sealed class ClipboardService : IDisposable
                 {
                     if (System.Text.Encoding.UTF8.GetByteCount(text) > Math.Min(limit, 16 * 1048576))
                     {
-                        Status?.Invoke("Text zu groß für den Verlauf");
+                        Status?.Invoke(L.Text("Text zu groß für den Verlauf"));
                         return;
                     }
                     captured = await Task.Run(() => store.AddText(text));
@@ -128,13 +128,13 @@ sealed class ClipboardService : IDisposable
             finally { copies.Release(); }
         }
         catch (OperationCanceledException) { }
-        catch (Exception e) { Status?.Invoke("Nicht gespeichert: " + e.Message); }
+        catch (Exception e) { Status?.Invoke(L.Text("Nicht gespeichert: ") + e.Message); }
     }
     public async Task<bool> Maintain(bool clear = false, bool includePinned = false)
     {
         if (!await copies.WaitAsync(0))
         {
-            Status?.Invoke("Bereinigung wartet: Eine Sicherung läuft noch.");
+            Status?.Invoke(L.Text("Bereinigung wartet: Eine Sicherung läuft noch."));
             return false;
         }
         try
@@ -144,7 +144,7 @@ sealed class ClipboardService : IDisposable
             Status?.Invoke("");
             return true;
         }
-        catch (Exception e) { Status?.Invoke("Bereinigung: " + e.Message); return false; }
+        catch (Exception e) { Status?.Invoke(L.Text("Bereinigung: ") + e.Message); return false; }
         finally { copies.Release(); }
     }
     internal static string[]? ReadFiles(System.Windows.IDataObject data) => data.GetData(DataFormats.FileDrop) switch { string[] paths => paths, System.Collections.Specialized.StringCollection list => list.Cast<string>().ToArray(), _ => null };
@@ -181,7 +181,7 @@ sealed class ClipboardService : IDisposable
         else if (item.Kind == "image")
         {
             if (!File.Exists(item.Files[0]))
-                throw new IOException("Gespeichertes Bild fehlt.");
+                throw new IOException(L.Text("Gespeichertes Bild fehlt."));
             var bitmap = new BitmapImage();
             bitmap.BeginInit();
             bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -193,7 +193,7 @@ sealed class ClipboardService : IDisposable
         else
         {
             if (item.Files.Any(x => !File.Exists(x) && !Directory.Exists(x)))
-                throw new IOException("Gespeicherte Datei fehlt.");
+                throw new IOException(L.Text("Gespeicherte Datei fehlt."));
             var paths = new StringCollection();
             paths.AddRange(item.Files);
             data.SetFileDropList(paths);

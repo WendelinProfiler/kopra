@@ -16,7 +16,7 @@ sealed class Sqlite : IDisposable
     {
         bool existing = File.Exists(path);
         if (sqlite3_open_v2(path, out db, 6 | 0x10000, 0) != 0)
-            throw new IOException("Verlauf-Datenbank konnte nicht geöffnet werden");
+            throw new IOException(L.Text("Verlauf-Datenbank konnte nicht geöffnet werden"));
         Run("PRAGMA busy_timeout=3000");
         Run("PRAGMA secure_delete=ON");
         string? previous = Run("PRAGMA auto_vacuum").FirstOrDefault();

@@ -4,6 +4,14 @@ namespace Kopra;
 
 static class Icons
 {
+    public static ImageSource SearchSymbol()
+    {
+        var pen = new Pen(new SolidColorBrush(Color.FromRgb(174,174,184)), 1.7) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round };
+        var group = new DrawingGroup();
+        group.Children.Add(new GeometryDrawing(null, pen, new EllipseGeometry(new Point(11,11),9,9)));
+        group.Children.Add(new GeometryDrawing(null, pen, new LineGeometry(new Point(18,18),new Point(27,27))));
+        var image = new DrawingImage(group); image.Freeze(); return image;
+    }
     [ComImport, Guid("bcc18b79-ba16-442f-80c4-8a59c30c463b"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
     interface ImageFactory
     {

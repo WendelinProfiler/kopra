@@ -6,16 +6,17 @@ struct HistoryEntry: Codable, Identifiable {
     var id: String; var kind: String; var title: String; var text: String; var paths: [String]; var bytes: Int; var created: Int64; var pinned: Bool; var origin: String; var wireID: String
 }
 struct MacPreferences: Codable {
+    var language="en"
     var device = uniqueID(); var since = milliseconds(); var textDays = 30; var fileDays = 7; var budgetMB = 2048; var maximumMB = 256; var reserveMB = 5120; var maximumEntries = 2000
     var paused = false; var sharedPaste = true; var excluded = ["com.1password.1password","com.bitwarden.desktop","org.keepassxc.keepassxc"]
-    var sharingEnabled=false;var searchKey:UInt32=49;var searchModifiers:UInt32=256;var historyKey:UInt32=9;var historyModifiers:UInt32=768;var searchLabel="⌘Leertaste";var historyLabel="⌘⇧V"
+    var sharingEnabled=false;var searchKey:UInt32=49;var searchModifiers:UInt32=256;var historyKey:UInt32=9;var historyModifiers:UInt32=768;var searchLabel=L.text("⌘Leertaste");var historyLabel="⌘⇧V"
     var received = [String](); var sent = [String](); var lastWindowsAck = ""
     init(){}
-    enum CodingKeys:String,CodingKey{case device,since,textDays,fileDays,budgetMB,maximumMB,reserveMB,maximumEntries,paused,sharedPaste,excluded,received,sent,lastWindowsAck,sharingEnabled,searchKey,searchModifiers,historyKey,historyModifiers,searchLabel,historyLabel}
+    enum CodingKeys:String,CodingKey{case language,device,since,textDays,fileDays,budgetMB,maximumMB,reserveMB,maximumEntries,paused,sharedPaste,excluded,received,sent,lastWindowsAck,sharingEnabled,searchKey,searchModifiers,historyKey,historyModifiers,searchLabel,historyLabel}
     init(from decoder:Decoder) throws {
         self.init();let c=try decoder.container(keyedBy:CodingKeys.self)
         func read<T:Decodable>(_ key:CodingKeys,_ fallback:T)->T{(try? c.decodeIfPresent(T.self,forKey:key)) ?? fallback}
-        device=read(.device,device);since=read(.since,since);textDays=read(.textDays,textDays);fileDays=read(.fileDays,fileDays);budgetMB=read(.budgetMB,budgetMB);maximumMB=read(.maximumMB,maximumMB);reserveMB=read(.reserveMB,reserveMB);maximumEntries=read(.maximumEntries,maximumEntries);paused=read(.paused,paused);sharedPaste=read(.sharedPaste,sharedPaste);excluded=read(.excluded,excluded);received=read(.received,received);sent=read(.sent,sent);lastWindowsAck=read(.lastWindowsAck,lastWindowsAck);sharingEnabled=read(.sharingEnabled,sharingEnabled);searchKey=read(.searchKey,searchKey);searchModifiers=read(.searchModifiers,searchModifiers);historyKey=read(.historyKey,historyKey);historyModifiers=read(.historyModifiers,historyModifiers);searchLabel=read(.searchLabel,searchLabel);historyLabel=read(.historyLabel,historyLabel)
+        language=read(.language,language);device=read(.device,device);since=read(.since,since);textDays=read(.textDays,textDays);fileDays=read(.fileDays,fileDays);budgetMB=read(.budgetMB,budgetMB);maximumMB=read(.maximumMB,maximumMB);reserveMB=read(.reserveMB,reserveMB);maximumEntries=read(.maximumEntries,maximumEntries);paused=read(.paused,paused);sharedPaste=read(.sharedPaste,sharedPaste);excluded=read(.excluded,excluded);received=read(.received,received);sent=read(.sent,sent);lastWindowsAck=read(.lastWindowsAck,lastWindowsAck);sharingEnabled=read(.sharingEnabled,sharingEnabled);searchKey=read(.searchKey,searchKey);searchModifiers=read(.searchModifiers,searchModifiers);historyKey=read(.historyKey,historyKey);historyModifiers=read(.historyModifiers,historyModifiers);searchLabel=read(.searchLabel,searchLabel);historyLabel=read(.historyLabel,historyLabel)
     }
 }
 final class MacHistory {
@@ -26,6 +27,7 @@ final class MacHistory {
         try? fm.createDirectory(at:self.root.appendingPathComponent("objects"),withIntermediateDirectories:true)
         try? fm.setAttributes([.posixPermissions:0o700],ofItemAtPath:self.root.path)
         if let data = try? Data(contentsOf:self.root.appendingPathComponent("preferences.json")), let value = try? JSONDecoder().decode(MacPreferences.self,from:data) { preferences = value }
+        L.use(preferences.language)
         if let data = try? Data(contentsOf:self.root.appendingPathComponent("history.json")), data.count < 32 * 1_048_576, let value = try? JSONDecoder().decode([HistoryEntry].self,from:data) { entries = value }
         prune()
     }

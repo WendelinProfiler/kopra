@@ -18,9 +18,9 @@ static class FileSafety
             return;
         using var file = CreateFile(path, 0x80, 7, 0, 3, 0x02000000 | 0x00200000, 0);
         if (file.IsInvalid || !GetFileInformationByHandleEx(file, 9, out var info, 8))
-            throw new IOException("Ordnerverknüpfung konnte nicht geprüft werden.");
+            throw new IOException(L.Text("Ordnerverknüpfung konnte nicht geprüft werden."));
         if (!IsSupportedTag(info.tag))
-            throw new IOException("Symbolische Verknüpfungen werden nicht rekursiv gesichert.");
+            throw new IOException(L.Text("Symbolische Verknüpfungen werden nicht rekursiv gesichert."));
         // Cloud placeholders describe this file, not another path. Reading
         // them uses the installed sync provider's normal hydration mechanism.
     }

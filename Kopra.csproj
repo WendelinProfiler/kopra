@@ -5,11 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
     <StartupObject>Kopra.Program</StartupObject>
-    <AssemblyName>Kopra</AssemblyName><Version>1.0.0-beta.3</Version>
+    <AssemblyName>Kopra</AssemblyName><Version>1.0.0-beta.4</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>assets/Kopra.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup><Compile Remove="tests/**/*.cs" /><Using Remove="System.Windows.Forms"/><Using Remove="System.Drawing"/><EmbeddedResource Include="assets/icons/settings.svg"/><Content Include="assets/icons/LUCIDE-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
   <ItemGroup><PackageReference Include="QRCoder" Version="1.9.0" /></ItemGroup>
-  <ItemGroup><Content Include="LICENSE;THIRD-PARTY-NOTICES.md;assets/QRCoder-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+  <ItemGroup><Content Include="LICENSE;THIRD-PARTY-NOTICES.md;assets/QRCoder-LICENSE.txt;assets/localization.en.json;assets/localization.de.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
 </Project>

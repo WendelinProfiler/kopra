@@ -49,9 +49,9 @@ sealed class SearchService(Preferences prefs, HistoryStore store)
         }
         catch (COMException) { }
         finally { if (items != null) Marshal.FinalReleaseComObject(items); if (appFolder != null) Marshal.FinalReleaseComObject(appFolder); if (shell != null) Marshal.FinalReleaseComObject(shell); }
-        foreach (var item in new[] { ("Einstellungen", "ms-settings:"), ("Bluetooth", "ms-settings:bluetooth"), ("WLAN", "ms-settings:network-wifi"), ("Sound", "ms-settings:sound"), ("Anzeige", "ms-settings:display"), ("Apps deinstallieren", "ms-settings:appsfeatures"), ("Windows Update", "ms-settings:windowsupdate"), ("Zwischenablage", "ms-settings:clipboard"), ("Datenschutz", "ms-settings:privacy"), ("Speicher", "ms-settings:storagesense"), ("Tastatur", "ms-settings:keyboard"), ("Maus", "ms-settings:mousetouchpad"), ("Benachrichtigungen", "ms-settings:notifications"), ("Standard-Apps", "ms-settings:defaultapps"), ("Autostart", "ms-settings:startupapps"), ("Energie", "ms-settings:powersleep"), ("Personalisierung", "ms-settings:personalization"), ("Taskleiste", "ms-settings:taskbar") })
-            found.Add(new(item.Item1, item.Item2, "Einstellung", "Windows-Einstellungen"));
-        found.Add(new("Explorer", "explorer.exe", "App", "Dateien und Ordner"));
+        foreach (var item in new[] { (L.Text("Einstellungen"), "ms-settings:"), ("Bluetooth", "ms-settings:bluetooth"), (L.Text("WLAN"), "ms-settings:network-wifi"), ("Sound", "ms-settings:sound"), (L.Text("Anzeige"), "ms-settings:display"), (L.Text("Apps deinstallieren"), "ms-settings:appsfeatures"), ("Windows Update", "ms-settings:windowsupdate"), (L.Text("Zwischenablage"), "ms-settings:clipboard"), (L.Text("Datenschutz"), "ms-settings:privacy"), (L.Text("Speicher"), "ms-settings:storagesense"), (L.Text("Tastatur"), "ms-settings:keyboard"), (L.Text("Maus"), "ms-settings:mousetouchpad"), (L.Text("Benachrichtigungen"), "ms-settings:notifications"), (L.Text("Standard-Apps"), "ms-settings:defaultapps"), (L.Text("Autostart"), "ms-settings:startupapps"), (L.Text("Energie"), "ms-settings:powersleep"), (L.Text("Personalisierung"), "ms-settings:personalization"), (L.Text("Taskleiste"), "ms-settings:taskbar") })
+            found.Add(new(item.Item1, item.Item2, "Einstellung", L.Text("Windows-Einstellungen")));
+        found.Add(new("Explorer", "explorer.exe", "App", L.Text("Dateien und Ordner")));
         found.AddRange(SettingsCatalog.Load());
         string folders = string.Join('|', prefs.SearchFolders);
         if (folders != lastFolders)
@@ -145,8 +145,8 @@ sealed class SearchService(Preferences prefs, HistoryStore store)
             }
             IndexStatus = "";
         }
-        catch (COMException) { IndexStatus = "Windows-Suchindex nicht verfügbar · Apps und eigene Suchordner funktionieren weiter"; }
-        catch (Exception e) when (e is not OutOfMemoryException) { IndexStatus = "Dateisuche derzeit nicht verfügbar"; }
+        catch (COMException) { IndexStatus = L.Text("Windows-Suchindex nicht verfügbar · Apps und eigene Suchordner funktionieren weiter"); }
+        catch (Exception e) when (e is not OutOfMemoryException) { IndexStatus = L.Text("Dateisuche derzeit nicht verfügbar"); }
         finally { if (recordset != null) { try { ((dynamic)recordset).Close(); } catch { } Marshal.FinalReleaseComObject(recordset); } if (connection != null) { try { ((dynamic)connection).Close(); } catch { } Marshal.FinalReleaseComObject(connection); } }
         return result;
     }

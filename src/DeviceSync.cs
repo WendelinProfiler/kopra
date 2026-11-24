@@ -26,7 +26,7 @@ static class SyncWire
     public static byte[] Seal(byte[] plain, byte[] key)
     {
         if (plain.Length > MaxFrame - 28)
-            throw new IOException("Übertragung zu groß");
+            throw new IOException(L.Text("Übertragung zu groß"));
         byte[] result = new byte[plain.Length + 28];
         RandomNumberGenerator.Fill(result.AsSpan(0, 12));
         using var aes = new AesGcm(key, 16);
@@ -36,7 +36,7 @@ static class SyncWire
     public static byte[] Open(byte[] sealedBox, byte[] key)
     {
         if (sealedBox.Length < 28 || sealedBox.Length > MaxFrame)
-            throw new IOException("Ungültige Nachricht");
+            throw new IOException(L.Text("Ungültige Nachricht"));
         byte[] plain = new byte[sealedBox.Length - 28];
         using var aes = new AesGcm(key, 16);
         aes.Decrypt(sealedBox.AsSpan(0, 12), sealedBox.AsSpan(12, plain.Length), sealedBox.AsSpan(12 + plain.Length, 16), plain, aad);
@@ -48,7 +48,7 @@ static class SyncWire
         await stream.ReadExactlyAsync(header, token);
         int length = BinaryPrimitives.ReadInt32BigEndian(header);
         if (length < 28 || length > MaxFrame)
-            throw new IOException("Übertragung zu groß");
+            throw new IOException(L.Text("Übertragung zu groß"));
         byte[] data = new byte[length];
         await stream.ReadExactlyAsync(data, token);
         return data;
@@ -64,54 +64,54 @@ static class SyncWire
     public static void Check(SharedClip clip)
     {
         if (clip.Id.Length is < 1 or > 100 || clip.Title.Length > 500 || Encoding.UTF8.GetByteCount(clip.Text) > 1048576 || clip.Files.Count > 2000 || clip.Kind is not ("text" or "image" or "files"))
-            throw new IOException("Ungültiger Eintrag");
+            throw new IOException(L.Text("Ungültiger Eintrag"));
         long size = Encoding.UTF8.GetByteCount(clip.Text);
         var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var f in clip.Files)
         {
             var parts = f.Path.Split('/');
             if (f.Path.Length > 500 || parts.Length > 32 || parts.Any(x => string.IsNullOrWhiteSpace(x) || x is "." or ".." || x.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || x.EndsWith('.') || x.EndsWith(' ') || new[] { "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "LPT1", "LPT2" }.Contains(x.Split('.')[0].ToUpperInvariant())) || !names.Add(f.Path))
-                throw new IOException("Ungültiger Dateipfad");
+                throw new IOException(L.Text("Ungültiger Dateipfad"));
             if (f.Directory && f.Data.Length > 0)
-                throw new IOException("Ungültiger Ordner");
+                throw new IOException(L.Text("Ungültiger Ordner"));
             size = checked(size + (long)f.Data.Length * 3 / 4);
             if (size > MaxContent)
-                throw new IOException("Eintrag ist größer als 32 MB");
+                throw new IOException(L.Text("Eintrag ist größer als 32 MB"));
             if (!f.Directory)
             {
                 try
                 {
                     _ = Convert.FromBase64String(f.Data);
                 }
-                catch (FormatException) { throw new IOException("Ungültiger Dateiinhalt"); }
+                catch (FormatException) { throw new IOException(L.Text("Ungültiger Dateiinhalt")); }
             }
         }
         if (clip.Kind == "text" && clip.Files.Count != 0 || clip.Kind == "image" && (clip.Files.Count != 1 || clip.Files[0].Directory) || clip.Kind == "files" && clip.Files.Count == 0)
-            throw new IOException("Unvollständiger Eintrag");
+            throw new IOException(L.Text("Unvollständiger Eintrag"));
         foreach (var f in clip.Files)
         {
             var prefix = f.Path + "/";
             if (!f.Directory && clip.Files.Any(x => x.Path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
-                throw new IOException("Datei kann kein Ordner sein");
+                throw new IOException(L.Text("Datei kann kein Ordner sein"));
         }
     }
     public static SharedClip Pack(ClipEntry item)
     {
         if (item.Bytes > MaxContent)
-            throw new IOException("Geräteübergreifend werden höchstens 32 MB pro Kopie übertragen.");
+            throw new IOException(L.Text("Geräteübergreifend werden höchstens 32 MB pro Kopie übertragen."));
         var files = new List<SharedFile>();
         long size = 0;
         void Add(string path, string relative)
         {
             if (files.Count >= 2000)
-                throw new IOException("Zu viele Dateien");
+                throw new IOException(L.Text("Zu viele Dateien"));
             var attr = File.GetAttributes(path);
             FileSafety.Check(path, attr);
             bool dir = Directory.Exists(path);
             byte[] bytes = dir ? [] : File.ReadAllBytes(path);
             size += bytes.Length;
             if (size > MaxContent)
-                throw new IOException("Eintrag zu groß");
+                throw new IOException(L.Text("Eintrag zu groß"));
             files.Add(new(relative, dir, Convert.ToBase64String(bytes)));
             if (dir)
                 foreach (var child in Directory.EnumerateFileSystemEntries(path))
@@ -159,7 +159,7 @@ sealed class DeviceSync : IDisposable
     }
     readonly HistoryStore store; readonly ClipboardService clipboard; readonly Preferences prefs; readonly string file; readonly object gate = new(); readonly CancellationTokenSource stop = new();
     SyncConfiguration config; byte[]? key; TcpListener? listener; UdpClient? discovery; readonly HashSet<string> recentRequests = []; readonly HashSet<string> skipped = [];
-    public string Status { get; private set; } = "Nur auf diesem PC";
+    public string Status { get; private set; } = L.Text("Nur auf diesem PC");
     public DeviceSync(string root, HistoryStore store, ClipboardService clipboard, Preferences prefs)
     {
         this.store = store;
@@ -194,7 +194,7 @@ sealed class DeviceSync : IDisposable
     public string BeginPairing()
     {
         if (HasPeer)
-            throw new IOException("Bitte zuerst die bestehende Verbindung aufheben.");
+            throw new IOException(L.Text("Bitte zuerst die bestehende Verbindung aufheben."));
         var addresses = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
             .Where(adapter => adapter.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up &&
                 adapter.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Loopback &&
@@ -205,10 +205,10 @@ sealed class DeviceSync : IDisposable
             .Where(address => { var b = address.GetAddressBytes(); return b[0] == 10 || b[0] == 192 && b[1] == 168 || b[0] == 172 && b[1] >= 16 && b[1] <= 31; })
             .Distinct().ToArray();
         if (addresses.Length == 0)
-            throw new IOException("Kein lokales Netzwerk gefunden.");
+            throw new IOException(L.Text("Kein lokales Netzwerk gefunden."));
         Start();
         if (listener == null)
-            throw new IOException("Die Geräteverbindung konnte nicht gestartet werden.");
+            throw new IOException(L.Text("Die Geräteverbindung konnte nicht gestartet werden."));
         return Pairing.Begin(addresses[0].ToString());
     }
     void InstallKey(byte[] secret, string peer)
@@ -224,7 +224,7 @@ sealed class DeviceSync : IDisposable
             recentRequests.Clear();
             skipped.Clear();
             Save();
-            Status = "Mit Mac verbunden";
+            Status = L.Text("Mit Mac verbunden");
             StartDiscovery();
         }
     }
@@ -239,7 +239,7 @@ sealed class DeviceSync : IDisposable
                 listener = null;
                 discovery?.Dispose();
                 discovery = null;
-                Status = "Nur auf diesem PC";
+                Status = L.Text("Nur auf diesem PC");
             }
         }
     }
@@ -252,7 +252,7 @@ sealed class DeviceSync : IDisposable
             discovery = new UdpClient(SyncWire.Port + 1);
             _ = Discover(discovery);
         }
-        catch (SocketException) { Status = "Gerätesuche eingeschränkt. Die direkte Verbindung bleibt verfügbar."; }
+        catch (SocketException) { Status = L.Text("Gerätesuche eingeschränkt. Die direkte Verbindung bleibt verfügbar."); }
     }
     public void Unpair()
     {
@@ -271,7 +271,7 @@ sealed class DeviceSync : IDisposable
                 Device = config.Device
             };
             Save();
-            Status = "Nur auf diesem PC";
+            Status = L.Text("Nur auf diesem PC");
         }
     }
     void Start()
@@ -282,11 +282,11 @@ sealed class DeviceSync : IDisposable
         {
             listener = new TcpListener(IPAddress.Any, SyncWire.Port);
             listener.Start(4);
-            Status = "Wartet auf Mac";
+            Status = L.Text("Wartet auf Mac");
             _ = Listen(listener);
             StartDiscovery();
         }
-        catch (SocketException) { listener?.Stop(); listener = null; Status = "Geräteverbindung konnte nicht gestartet werden"; }
+        catch (SocketException) { listener?.Stop(); listener = null; Status = L.Text("Geräteverbindung konnte nicht gestartet werden"); }
     }
     async Task Discover(UdpClient socket)
     {
@@ -376,15 +376,15 @@ sealed class DeviceSync : IDisposable
                 }
                 var packet = JsonSerializer.Deserialize<SyncPacket>(SyncWire.Open(frame, secret), SyncWire.Json) ?? throw new IOException();
                 if (packet.Version != 1 || packet.Kind != "exchange" || Math.Abs(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() - packet.Issued) > 60000 || packet.Ack.Length > 100 || !Guid.TryParseExact(packet.Id, "N", out _) || !Guid.TryParseExact(packet.Device, "N", out _) || packet.Device == config.Device)
-                    throw new IOException("Ungültige Geräteanfrage");
+                    throw new IOException(L.Text("Ungültige Geräteanfrage"));
                 lock (gate)
                 {
                     if (key == null || !CryptographicOperations.FixedTimeEquals(key, secret))
                         return;
                     if (config.Peer.Length > 0 && config.Peer != packet.Device)
-                        throw new IOException("Unbekanntes Gerät");
+                        throw new IOException(L.Text("Unbekanntes Gerät"));
                     if (!recentRequests.Add(packet.Id))
-                        throw new IOException("Wiederholte Anfrage");
+                        throw new IOException(L.Text("Wiederholte Anfrage"));
                     if (recentRequests.Count > 256)
                         recentRequests.Remove(recentRequests.First());
                     if (config.Peer.Length == 0)
@@ -409,7 +409,7 @@ sealed class DeviceSync : IDisposable
                     if (!seen)
                     {
                         if (prefs.Paused)
-                            throw new IOException("Verlauf pausiert");
+                            throw new IOException(L.Text("Verlauf pausiert"));
                         await clipboard.ImportShared(packet.Entry, "Mac", packet.Device, token);
                         lock (gate)
                         {
@@ -432,14 +432,14 @@ sealed class DeviceSync : IDisposable
                         outgoing = SyncWire.Pack(item);
                         break;
                     }
-                    catch (IOException) { skipped.Add(id); Status = "Eine Kopie konnte nicht übertragen werden (max. 32 MB)."; }
+                    catch (IOException) { skipped.Add(id); Status = L.Text("Eine Kopie konnte nicht übertragen werden (max. 32 MB)."); }
                 }
                 var response = new SyncPacket(1, config.Device, packet.Id, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), "response", ack, outgoing);
                 await SyncWire.Write(network, SyncWire.Seal(JsonSerializer.SerializeToUtf8Bytes(response, SyncWire.Json), secret), token);
-                Status = "Mit Mac verbunden";
+                Status = L.Text("Mit Mac verbunden");
             }
-            catch (OperationCanceledException) { Status = "Verbindung unterbrochen – versucht es erneut"; }
-            catch (Exception) { Status = "Übertragung wartet – Verbindung oder Speicher prüfen"; }
+            catch (OperationCanceledException) { Status = L.Text("Verbindung unterbrochen – versucht es erneut"); }
+            catch (Exception) { Status = L.Text("Übertragung wartet – Verbindung oder Speicher prüfen"); }
             finally { connections.Release(); }
         }
     }

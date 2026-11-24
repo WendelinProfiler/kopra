@@ -17,9 +17,9 @@ sealed partial class LauncherWindow
         }
         catch (IOException error) { footer.Text = error.Message; return; }
         var panel = new StackPanel { Margin = new Thickness(22) };
-        var heading = new TextBlock { Text = "Mac verbinden", FontSize = 21, FontWeight = FontWeights.SemiBold };
+        var heading = new TextBlock { Text = L.Text("Mac verbinden"), FontSize = 21, FontWeight = FontWeights.SemiBold };
         panel.Children.Add(heading);
-        var instructions = new TextBlock { Text = "Gib diesen Code auf deinem Mac in Kopra → Einstellungen → Geräte ein.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = Ink(180), Margin = new Thickness(0, 10, 0, 14) };
+        var instructions = new TextBlock { Text = L.Text("Gib diesen Code auf deinem Mac in Kopra → Einstellungen → Geräte ein."), TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = Ink(180), Margin = new Thickness(0, 10, 0, 14) };
         panel.Children.Add(instructions);
         var entryCode = new TextBlock { Text = DeviceSync.Pairing.EntryCode, FontSize = 38, FontWeight = FontWeights.Medium, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 12) };
         panel.Children.Add(entryCode);
@@ -36,26 +36,26 @@ sealed partial class LauncherWindow
         var qr = new Image { Source = image, Width = 236, Height = 236, HorizontalAlignment = HorizontalAlignment.Center };
         RenderOptions.SetBitmapScalingMode(qr, BitmapScalingMode.NearestNeighbor);
         var surface = new Border { Background = Brushes.White, CornerRadius = new CornerRadius(10), Padding = new Thickness(8), Child = qr, HorizontalAlignment = HorizontalAlignment.Center };
-        var extra = new Expander { Header = "Stattdessen QR-Code verwenden", Content = surface, IsExpanded = false, Margin = new Thickness(0, 8, 0, 8) };
+        var extra = new Expander { Header = L.Text("Stattdessen QR-Code verwenden"), Content = surface, IsExpanded = false, Margin = new Thickness(0, 8, 0, 8) };
         panel.Children.Add(extra);
-        var state = new TextBlock { Text = "Wartet auf deinen Mac", FontSize = 12, Foreground = Ink(175), TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 12, 0, 8), TextWrapping = TextWrapping.Wrap };
+        var state = new TextBlock { Text = L.Text("Wartet auf deinen Mac"), FontSize = 12, Foreground = Ink(175), TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 12, 0, 8), TextWrapping = TextWrapping.Wrap };
         panel.Children.Add(state);
         var digits = new TextBlock { FontSize = 30, FontWeight = FontWeights.Medium, TextAlignment = TextAlignment.Center, Visibility = Visibility.Collapsed, Margin = new Thickness(0, 4, 0, 12) };
         panel.Children.Add(digits);
-        var approve = MakeButton("Codes stimmen überein", () => DeviceSync.Pairing.Approve());
+        var approve = MakeButton(L.Text("Codes stimmen überein"), () => DeviceSync.Pairing.Approve());
         approve.Background = new SolidColorBrush(Color.FromRgb(10, 132, 255));
         approve.Visibility = Visibility.Collapsed;
         panel.Children.Add(approve);
-        var save = MakeButton("QR-Code als Bild speichern …", () => { var picker = new Microsoft.Win32.SaveFileDialog { Filter = "PNG-Bild|*.png", FileName = "Kopra-Kopplung.png" }; if (picker.ShowDialog(this) == true) { var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image)); using var output = File.Create(picker.FileName); encoder.Save(output); } });
+        var save = MakeButton(L.Text("QR-Code als Bild speichern …"), () => { var picker = new Microsoft.Win32.SaveFileDialog { Filter = L.Text("PNG-Bild|*.png"), FileName = "Kopra-Kopplung.png" }; if (picker.ShowDialog(this) == true) { var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image)); using var output = File.Create(picker.FileName); encoder.Save(output); } });
         save.FontSize = 11;
         save.Background = Brushes.Transparent;
         save.Visibility = Visibility.Collapsed;
         extra.Expanded += (_, _) => save.Visibility = Visibility.Visible;
         extra.Collapsed += (_, _) => save.Visibility = Visibility.Collapsed;
         panel.Children.Add(save);
-        var retry = MakeButton("Neuen Code anzeigen", ShowPairing);
+        var retry = MakeButton(L.Text("Neuen Code anzeigen"), ShowPairing);
         retry.Visibility = Visibility.Collapsed; panel.Children.Add(retry);
-        var close = MakeButton("Abbrechen", () => { DismissConfirmation(); ShowSettings(); });
+        var close = MakeButton(L.Text("Abbrechen"), () => { DismissConfirmation(); ShowSettings(); });
         panel.Children.Add(close);
         confirmation = new Border { Background = new SolidColorBrush(Color.FromArgb(165, 0, 0, 0)), CornerRadius = new CornerRadius(15), Child = new Border { Width = 410, MaxHeight = Math.Max(350, Height - 30), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, CornerRadius = new CornerRadius(15), Background = Ink(44), Child = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } } };
         Grid.SetRowSpan(confirmation, 5);
@@ -69,34 +69,34 @@ sealed partial class LauncherWindow
             switch (snapshot.Status)
             {
                 case "scanning":
-                    state.Text = $"Gültig für {seconds / 60}:{seconds % 60:D2} · Beide Geräte im selben Netzwerk";
+                    state.Text = L.Format("G\u00FCltig f\u00FCr {0}:{1:D2} \u00B7 Beide Ger\u00E4te im selben Netzwerk", seconds / 60, seconds % 60);
                     break;
                 case "confirmation":
                     entryCode.Visibility = extra.Visibility = save.Visibility = Visibility.Collapsed;
-                    heading.Text = "Mac gefunden";
-                    instructions.Text = snapshot.Numeric ? "Erlaube die Verbindung, damit beide Geräte neue Kopien teilen können." : "Vergleiche diesen Bestätigungscode mit dem Mac.";
+                    heading.Text = L.Text("Mac gefunden");
+                    instructions.Text = snapshot.Numeric ? L.Text("Erlaube die Verbindung, damit beide Geräte neue Kopien teilen können.") : L.Text("Vergleiche diesen Bestätigungscode mit dem Mac.");
                     digits.Text = snapshot.Code;
                     digits.Visibility = snapshot.Numeric ? Visibility.Collapsed : Visibility.Visible;
                     approve.Visibility = Visibility.Visible;
-                    approve.Content = snapshot.HostApproved ? "Auf diesem PC bestätigt" : snapshot.Numeric ? "Mit Mac verbinden" : "Codes stimmen überein";
+                    approve.Content = snapshot.HostApproved ? L.Text("Auf diesem PC bestätigt") : snapshot.Numeric ? L.Text("Mit Mac verbinden") : L.Text("Codes stimmen überein");
                     approve.IsEnabled = !snapshot.HostApproved;
-                    state.Text = snapshot.HostApproved ? "Bitte jetzt am Mac bestätigen." : snapshot.PeerApproved ? "Am Mac bestätigt. Bestätige jetzt auf diesem PC." : "Bestätige die Verbindung auf diesem PC und am Mac.";
+                    state.Text = snapshot.HostApproved ? L.Text("Bitte jetzt am Mac bestätigen.") : snapshot.PeerApproved ? L.Text("Am Mac bestätigt. Bestätige jetzt auf diesem PC.") : L.Text("Bestätige die Verbindung auf diesem PC und am Mac.");
                     break;
                 case "complete":
                     entryCode.Visibility = extra.Visibility = digits.Visibility = save.Visibility = approve.Visibility = Visibility.Collapsed;
-                    heading.Text = "Mit Mac verbunden";
-                    instructions.Text = "Neue Texte, Bilder, Dateien und Ordner erscheinen jetzt auf beiden Geräten.";
-                    state.Text = "Die Verbindung bleibt gespeichert. Beim nächsten Start musst du nicht erneut koppeln.";
-                    close.Content = "Fertig";
+                    heading.Text = L.Text("Mit Mac verbunden");
+                    instructions.Text = L.Text("Neue Texte, Bilder, Dateien und Ordner erscheinen jetzt auf beiden Geräten.");
+                    state.Text = L.Text("Die Verbindung bleibt gespeichert. Beim nächsten Start musst du nicht erneut koppeln.");
+                    close.Content = L.Text("Fertig");
                     break;
                 case "expired":
                 case "rejected":
                     entryCode.Visibility = extra.Visibility = digits.Visibility = approve.Visibility = save.Visibility = Visibility.Collapsed;
-                    heading.Text = snapshot.Status == "expired" ? "Code abgelaufen" : "Verbindung abgebrochen";
-                    instructions.Text = "Dein Verlauf bleibt erhalten. Du kannst einen neuen Versuch starten.";
-                    state.Text = "Erzeuge hier einen neuen Code und gib ihn am Mac ein.";
+                    heading.Text = snapshot.Status == "expired" ? L.Text("Code abgelaufen") : L.Text("Verbindung abgebrochen");
+                    instructions.Text = L.Text("Dein Verlauf bleibt erhalten. Du kannst einen neuen Versuch starten.");
+                    state.Text = L.Text("Erzeuge hier einen neuen Code und gib ihn am Mac ein.");
                     retry.Visibility = Visibility.Visible;
-                    close.Content = "Schließen";
+                    close.Content = L.Text("Schließen");
                     DeviceSync.CancelPairing();
                     pairingTimer?.Stop();
                     break;

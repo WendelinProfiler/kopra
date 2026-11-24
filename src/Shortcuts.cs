@@ -27,19 +27,19 @@ sealed class Shortcuts : IDisposable
         if (!Register(true, preferences.HistoryKey, preferences.HistoryModifiers, false, out error))
             StartupError = error;
     }
-    public string Label(bool history) => !history && preferences.WindowsKey ? "Windows-Taste" : Label(history ? preferences.HistoryKey : preferences.SearchKey, history ? preferences.HistoryModifiers : preferences.SearchModifiers);
+    public string Label(bool history) => !history && preferences.WindowsKey ? L.Text("Windows-Taste") : Label(history ? preferences.HistoryKey : preferences.SearchKey, history ? preferences.HistoryModifiers : preferences.SearchModifiers);
     public static string Label(uint key, uint modifiers)
     {
         var parts = new List<string>();
         if ((modifiers & 2) != 0)
-            parts.Add("Strg");
+            parts.Add(L.Text("Strg"));
         if ((modifiers & 1) != 0)
             parts.Add("Alt");
         if ((modifiers & 4) != 0)
-            parts.Add("Umschalt");
+            parts.Add(L.Text("Umschalt"));
         if ((modifiers & 8) != 0)
             parts.Add("Win");
-        parts.Add(key == 32 ? "Leertaste" : KeyInterop.KeyFromVirtualKey((int)key).ToString());
+        parts.Add(key == 32 ? L.Text("Leertaste") : KeyInterop.KeyFromVirtualKey((int)key).ToString());
         return string.Join(" + ", parts);
     }
     public static bool Valid(uint key, uint modifiers) => key != 0 && key <= 255 && key is not (16 or 17 or 18 or 91 or 92 or 160 or 161 or 162 or 163 or 164 or 165 or 229 or 231) && ((modifiers & 11) != 0 || key is >= 112 and <= 135) && !(modifiers == 8 && key is 76 or 85) && !(modifiers == 3 && key == 46);
@@ -48,17 +48,17 @@ sealed class Shortcuts : IDisposable
         error = "";
         if (windowsKey && history)
         {
-            error = "Die Windows-Taste ist für die Suche vorgesehen.";
+            error = L.Text("Die Windows-Taste ist für die Suche vorgesehen.");
             return false;
         }
         if (!windowsKey && !Valid(key, modifiers))
         {
-            error = "Bitte eine Tastenkombination oder eine Funktionstaste wählen.";
+            error = L.Text("Bitte eine Tastenkombination oder eine Funktionstaste wählen.");
             return false;
         }
         if (!windowsKey && (history ? !preferences.WindowsKey && key == preferences.SearchKey && modifiers == preferences.SearchModifiers : key == preferences.HistoryKey && modifiers == preferences.HistoryModifiers))
         {
-            error = "Diese Kombination nutzt bereits die andere Aktion.";
+            error = L.Text("Diese Kombination nutzt bereits die andere Aktion.");
             return false;
         }
         if (!Register(history, key, modifiers, windowsKey, out error))
@@ -82,7 +82,7 @@ sealed class Shortcuts : IDisposable
         int old = history ? historyId : searchId;
         if (windowsKey)
         {
-            if (!windows.IsInstalled) { error = "Die Windows-Taste konnte nicht registriert werden. Das bisherige Kürzel bleibt erhalten."; return false; }
+            if (!windows.IsInstalled) { error = L.Text("Die Windows-Taste konnte nicht registriert werden. Das bisherige Kürzel bleibt erhalten."); return false; }
             if (old != 0)
                 Native.UnregisterHotKey(hwnd, old);
             searchId = 0;
@@ -93,7 +93,7 @@ sealed class Shortcuts : IDisposable
         int id = ++nextId;
         if (!Native.RegisterHotKey(hwnd, id, modifiers | 0x4000, key))
         {
-            error = "Diese Kombination ist belegt. Die bisherige Einstellung bleibt erhalten.";
+            error = L.Text("Diese Kombination ist belegt. Die bisherige Einstellung bleibt erhalten.");
             return false;
         }
         if (old != 0)

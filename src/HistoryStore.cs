@@ -82,7 +82,7 @@ sealed class HistoryStore : IDisposable
     public ClipEntry AddImage(byte[] png, long limit)
     {
         if (png.LongLength > limit)
-            throw new IOException("Das Bild überschreitet das Eintragslimit.");
+            throw new IOException(L.Text("Das Bild überschreitet das Eintragslimit."));
         string id = Guid.NewGuid().ToString("N"), folder = Path.Combine(objects, id);
         using var ticket = budget?.Reserve(id, png.LongLength);
         Directory.CreateDirectory(folder);
@@ -90,7 +90,7 @@ sealed class HistoryStore : IDisposable
         {
             string path = Path.Combine(folder, "Bild.png");
             File.WriteAllBytes(path, png);
-            var item = new ClipEntry(id, "image", "Kopiertes Bild", "", [path], Hash(png), png.Length, DateTime.UtcNow);
+            var item = new ClipEntry(id, "image", L.Text("Kopiertes Bild"), "", [path], Hash(png), png.Length, DateTime.UtcNow);
             return Put(item);
         }
         catch { DeleteDirectory(id); throw; }
@@ -98,7 +98,7 @@ sealed class HistoryStore : IDisposable
     public async Task<ClipEntry> AddFiles(string[] sources, long limit, Action<long, long>? progress = null, CancellationToken cancel = default)
     {
         if (sources.Length == 0)
-            throw new IOException("Keine Dateien ausgewählt.");
+            throw new IOException(L.Text("Keine Dateien ausgewählt."));
         string id = Guid.NewGuid().ToString("N"), folder = Path.Combine(objects, id);
         try
         {
@@ -119,14 +119,14 @@ sealed class HistoryStore : IDisposable
                 {
                     cancel.ThrowIfCancellationRequested();
                     if (depth > 64)
-                        throw new IOException("Der Ordner ist zu tief verschachtelt.");
+                        throw new IOException(L.Text("Der Ordner ist zu tief verschachtelt."));
                     var info = new FileInfo(path);
                     var attributes = File.GetAttributes(path);
                     FileSafety.Check(path, attributes);
                     bool directory = (attributes & FileAttributes.Directory) != 0;
                     plan.Add((path, relative, directory));
                     if (plan.Count > 100000)
-                        throw new IOException("Zu viele Dateien in einem Eintrag.");
+                        throw new IOException(L.Text("Zu viele Dateien in einem Eintrag."));
                     if (directory)
                     {
                         foreach (var child in Directory.EnumerateFileSystemEntries(path))
@@ -136,14 +136,14 @@ sealed class HistoryStore : IDisposable
                     {
                         total = checked(total + info.Length);
                         if (total > limit)
-                            throw new IOException("Die Auswahl überschreitet das Eintragslimit.");
+                            throw new IOException(L.Text("Die Auswahl überschreitet das Eintragslimit."));
                     }
                 }
                 Scan(source, name);
             }
             using var ticket = budget?.Reserve(id, checked(total + sources.Sum(x => (long)x.Length) * 16 + plan.Count * StorageBudget.AllocationUnit(root)));
             if (budget == null && new DriveInfo(Path.GetPathRoot(folder)!).AvailableFreeSpace < total + 64L * 1048576)
-                throw new IOException("Nicht genügend freier Speicher für die Dateisicherung.");
+                throw new IOException(L.Text("Nicht genügend freier Speicher für die Dateisicherung."));
             Directory.CreateDirectory(folder);
             long copied = 0, lastCheck = 0;
             using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
@@ -169,7 +169,7 @@ sealed class HistoryStore : IDisposable
                 {
                     copied = checked(copied + read);
                     if (copied > limit || copied > total)
-                        throw new IOException("Die Auswahl wurde während der Sicherung größer. Bitte erneut kopieren.");
+                        throw new IOException(L.Text("Die Auswahl wurde während der Sicherung größer. Bitte erneut kopieren."));
                     if (copied - lastCheck >= 4L * 1048576)
                     {
                         budget?.CheckWriting();
@@ -180,7 +180,7 @@ sealed class HistoryStore : IDisposable
                     progress?.Invoke(copied, total);
                 }
             }
-            string title = sources.Length == 1 ? Path.GetFileName(Path.TrimEndingDirectorySeparator(sources[0])) : $"{sources.Length} kopierte Objekte";
+            string title = sources.Length == 1 ? Path.GetFileName(Path.TrimEndingDirectorySeparator(sources[0])) : L.Format("{0} kopierte Objekte", sources.Length);
             var entry = new ClipEntry(id, "files", title, "", top.ToArray(), Convert.ToHexString(hash.GetHashAndReset()), copied, DateTime.UtcNow);
             return Put(entry);
         }
@@ -212,7 +212,7 @@ sealed class HistoryStore : IDisposable
         foreach (var file in clip.Files)
             bytes = checked(bytes + file.Data.Length * 3L / 4);
         if (bytes > limit)
-            throw new IOException("Empfang überschreitet das Eintragslimit.");
+            throw new IOException(L.Text("Empfang überschreitet das Eintragslimit."));
         if (clip.Kind == "text")
             return SetOrigin(AddText(clip.Text), device, name);
         string id = Guid.NewGuid().ToString("N"), folder = Path.Combine(objects, id);
@@ -225,7 +225,7 @@ sealed class HistoryStore : IDisposable
             {
                 string target = Path.GetFullPath(Path.Combine(folder, file.Path.Replace('/', Path.DirectorySeparatorChar)));
                 if (!target.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-                    throw new IOException("Ungültiger Dateipfad");
+                    throw new IOException(L.Text("Ungültiger Dateipfad"));
                 if (file.Directory)
                 {
                     Directory.CreateDirectory(target);
@@ -328,10 +328,10 @@ sealed class HistoryStore : IDisposable
     void DeleteDirectory(string id)
     {
         if (id.Length != 32 || !Guid.TryParseExact(id, "N", out _))
-            throw new IOException("Ungültiger Speicherpfad");
+            throw new IOException(L.Text("Ungültiger Speicherpfad"));
         string path = Path.GetFullPath(Path.Combine(objects, id));
         if (!path.StartsWith(Path.GetFullPath(objects) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-            throw new IOException("Ungültiger Speicherpfad");
+            throw new IOException(L.Text("Ungültiger Speicherpfad"));
         if (Directory.Exists(path))
             Directory.Delete(path, true);
     }

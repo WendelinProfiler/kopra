@@ -42,12 +42,12 @@ import Vision
 @MainActor func renderPreview(_ folder:String) throws {
     _ = NSApplication.shared;NSApp.setActivationPolicy(.accessory);NSApp.appearance=NSAppearance(named:.darkAqua)
     let root=FileManager.default.temporaryDirectory.appendingPathComponent("Kopra-preview-"+uniqueID());let history=MacHistory(root:root);history.preferences.reserveMB=0;defer{try? FileManager.default.removeItem(at:root)}
-    _ = try history.insert(SharedClip(id:uniqueID(),kind:"text",title:"Eine Idee festhalten",text:"Eine Idee festhalten. Später genau hier wiederfinden.",created:milliseconds()-3000,files:[]),origin:"Windows")
+    _ = try history.insert(SharedClip(id:uniqueID(),kind:"text",title:"A note to keep",text:"A note to keep for later.",created:milliseconds()-3000,files:[]),origin:"Windows")
     _ = try history.insert(SharedClip(id:uniqueID(),kind:"text",title:"https://example.com/design",text:"https://example.com/design",created:milliseconds()-2000,files:[]),origin:"")
-    _ = try history.insert(SharedClip(id:uniqueID(),kind:"files",title:"Projektunterlagen",text:"",created:milliseconds()-1000,files:[SharedFile(path:"Projektunterlagen",directory:true,data:""),SharedFile(path:"Projektunterlagen/Notizen.txt",directory:false,data:Data("Ideen für das nächste Projekt".utf8).base64EncodedString())]),origin:"")
+    _ = try history.insert(SharedClip(id:uniqueID(),kind:"files",title:"Project notes",text:"",created:milliseconds()-1000,files:[SharedFile(path:"Project notes",directory:true,data:""),SharedFile(path:"Project notes/Notes.txt",directory:false,data:Data("Ideas for the next project".utf8).base64EncodedString())]),origin:"")
     let image=NSImage(size:NSSize(width:640,height:400));image.lockFocus();NSGradient(starting:NSColor(calibratedRed:0.27,green:0.68,blue:0.88,alpha:1),ending:NSColor(calibratedRed:0.35,green:0.31,blue:0.73,alpha:1))!.draw(in:NSRect(x:0,y:0,width:640,height:400),angle:45);NSColor(calibratedRed:0.93,green:0.79,blue:0.61,alpha:1).setFill();NSBezierPath(ovalIn:NSRect(x:420,y:250,width:90,height:90)).fill();let mountains=NSBezierPath();mountains.move(to:NSPoint(x:0,y:0));mountains.line(to:NSPoint(x:170,y:280));mountains.line(to:NSPoint(x:340,y:90));mountains.line(to:NSPoint(x:440,y:190));mountains.line(to:NSPoint(x:640,y:0));mountains.close();NSColor(calibratedRed:0.15,green:0.25,blue:0.45,alpha:1).setFill();mountains.fill();image.unlockFocus()
     guard let tiff=image.tiffRepresentation,let bitmap=NSBitmapImageRep(data:tiff),let png=bitmap.representation(using:.png,properties:[:]) else{throw SharedError.invalid}
-    _ = try history.insert(SharedClip(id:uniqueID(),kind:"image",title:"Bildvorschau.png",text:"",created:milliseconds(),files:[SharedFile(path:"Bildvorschau.png",directory:false,data:png.base64EncodedString())]),origin:"")
+    _ = try history.insert(SharedClip(id:uniqueID(),kind:"image",title:"Landscape.png",text:"",created:milliseconds(),files:[SharedFile(path:"Landscape.png",directory:false,data:png.base64EncodedString())]),origin:"")
     let model=AppModel(history:history,loadPairing:false);model.status="Mit Windows verbunden";model.historyMode=true;model.search()
     let area=NSScreen.main?.visibleFrame ?? NSRect(x:0,y:0,width:1280,height:900)
     let panel=NSWindow(contentRect:NSRect(x:area.midX-370,y:area.midY-295,width:740,height:590),styleMask:[.borderless],backing:.buffered,defer:false);panel.isOpaque=false;panel.backgroundColor = .clear
@@ -76,6 +76,12 @@ func lanSelfTest(_ pairFile:String) throws {
 func selfTest(_ fixture: String) throws {
     let fm=FileManager.default;let root=fm.temporaryDirectory.appendingPathComponent("Kopra-tests-"+uniqueID());try fm.createDirectory(at:root,withIntermediateDirectories:true);defer{try? fm.removeItem(at:root)}
     var count=0;func check(_ value:Bool) throws{count+=1;if !value{throw SharedError.invalid}}
+    try check(MacPreferences().language=="en")
+    L.use("en");try check(L.text("Verlauf")=="History");try check(L.text("Keine Ergebnisse")=="No results")
+    try check(L.format("Gültig für {0}:{1:D2} · Beide Geräte im selben Netzwerk",2,7).contains("2:07"))
+    var localizedPreferences=MacPreferences();localizedPreferences.language="de"
+    let savedLanguage=try JSONDecoder().decode(MacPreferences.self,from:JSONEncoder().encode(localizedPreferences));try check(savedLanguage.language=="de")
+    L.use("de");try check(L.text("Verlauf")=="Verlauf");try check(L.text("Connected to Windows")=="Mit Windows verbunden");L.use("en")
     let json=try JSONSerialization.jsonObject(with:Data(contentsOf:URL(fileURLWithPath:fixture))) as! [String:String];let key=Data(base64Encoded:json["key"]!)!;let plain=Data(base64Encoded:json["plain"]!)!;let sealed=Data(base64Encoded:json["sealedBox"]!)!;try check(try SharedProtocol.open(sealed,key:key)==plain);try check(try SharedProtocol.open(SharedProtocol.seal(plain,key:key),key:key)==plain)
     let fixtureFolder=URL(fileURLWithPath:fixture).deletingLastPathComponent()
     let qrRequest=VNDetectBarcodesRequest();qrRequest.symbologies=[.qr]

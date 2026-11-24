@@ -96,7 +96,7 @@ sealed partial class LauncherWindow : Window
         var tools = new StackPanel { Orientation = Orientation.Horizontal };
         DockPanel.SetDock(tools, Dock.Right);
         top.Children.Add(tools);
-        var back = MakeButton("", () => OpenMode(false, false), "Zurück zur Suche");
+        var back = MakeButton("", () => OpenMode(false, false), L.Text("Zurück zur Suche"));
         back.Content = Vector("M16,3 L7,12 16,21", 13);
         back.Background = Brushes.Transparent;
         back.Padding = new Thickness(5, 0, 8, 2);
@@ -126,9 +126,9 @@ sealed partial class LauncherWindow : Window
         var searchTools = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(searchTools, 2);
         searchBox.Children.Add(searchTools);
-        var gear = MakeButton("", () => ShowSettings(), "Einstellungen");
+        var gear = MakeButton("", () => ShowSettings(), L.Text("Einstellungen"));
         gear.Content = new Image { Source = Icons.SettingsSymbol(), Width = 20, Height = 20, Stretch = Stretch.Uniform };
-        System.Windows.Automation.AutomationProperties.SetName(gear, "Einstellungen");
+        System.Windows.Automation.AutomationProperties.SetName(gear, L.Text("Einstellungen"));
         gear.Background = Brushes.Transparent;
         gear.Foreground = new SolidColorBrush(Color.FromRgb(151, 151, 161));
         gear.Padding = new Thickness(8, 6, 8, 6);
@@ -144,7 +144,7 @@ sealed partial class LauncherWindow : Window
         Grid.SetColumn(input, 1);
         searchBox.Children.Add(input);
         input.TextChanged += async (_, _) => await UpdateResults();
-        placeholder.Text = "Suchen …";
+        placeholder.Text = L.Text("Suchen …");
         placeholder.FontSize = 24;
         placeholder.Foreground = new SolidColorBrush(Color.FromRgb(154, 154, 165));
         placeholder.VerticalAlignment = VerticalAlignment.Center;
@@ -188,7 +188,7 @@ sealed partial class LauncherWindow : Window
         body.Children.Add(detail);
         var bottom = new DockPanel { Margin = new Thickness(8, 11, 8, 0) };
         Add(content, bottom, 4);
-        hint.Text = "↑↓  Auswählen     ↵  Öffnen     esc  Ausblenden";
+        hint.Text = L.Text("↑↓  Auswählen     ↵  Öffnen     esc  Ausblenden");
         hint.FontSize = 10;
         hint.Foreground = new SolidColorBrush(Color.FromRgb(139, 140, 151));
         hint.VerticalAlignment = VerticalAlignment.Center;
@@ -223,7 +223,7 @@ sealed partial class LauncherWindow : Window
         PreviewKeyDown += OnKey;
         InitializeFocusOwnership();
         clipboard.Changed += () => Dispatcher.InvokeAsync(async () => { if (history && IsVisible && !editing) await UpdateResults(); });
-        clipboard.Status += message => Dispatcher.InvokeAsync(() => { status.Text = message; if (message.Length > 0) footer.Text = message.Length > 54 ? message[..54] + "…" : message; else footer.Text = "Nur auf diesem Rechner"; });
+        clipboard.Status += message => Dispatcher.InvokeAsync(() => { status.Text = message; if (message.Length > 0) footer.Text = message.Length > 54 ? message[..54] + "…" : message; else footer.Text = L.Text("Nur auf diesem Rechner"); });
     }
     static FontFamily ChooseFont() => new("Segoe UI Variable Text, Segoe UI");
     static void Add(Grid parent, UIElement element, int row)
@@ -239,7 +239,7 @@ sealed partial class LauncherWindow : Window
         button.Click += (_, _) => action();
         return button;
     }
-    static ViewItem HistoryAction() => new("Verlauf", "Texte, Bilder, Dateien und Ordner", "", LauncherAction.History, Icons.ClipboardSymbol());
+    static ViewItem HistoryAction() => new(L.Text("Verlauf"), L.Text("Texte, Bilder, Dateien und Ordner"), "", LauncherAction.History, Icons.ClipboardSymbol());
     public void OpenMode(bool clipboardMode, bool captureTarget = true)
     {
         if (IsVisible && !IsEnabled) return;
@@ -262,15 +262,15 @@ sealed partial class LauncherWindow : Window
         body.ColumnDefinitions[1].Width = new GridLength(history ? 260 : 0);
         Height = history ? 510 : 250;
         navigation.Visibility = history ? Visibility.Visible : Visibility.Collapsed;
-        contextTitle.Text = "Verlauf";
-        placeholder.Text = history ? "Verlauf durchsuchen" : "Suchen …";
+        contextTitle.Text = L.Text("Verlauf");
+        placeholder.Text = history ? L.Text("Verlauf durchsuchen") : L.Text("Suchen …");
         renderedQuery = "\0";
         list.ItemsSource = history ? new List<ViewItem>() : new List<ViewItem> { HistoryAction() };
         list.SelectedIndex = history ? -1 : 0;
         input.Text = "";
-        section.Text = history ? "ZWISCHENABLAGE · LOKAL GESICHERT" : "APPS, DATEIEN UND EINSTELLUNGEN";
+        section.Text = history ? L.Text("ZWISCHENABLAGE · LOKAL GESICHERT") : L.Text("APPS, DATEIEN UND EINSTELLUNGEN");
         ToolTipService.SetIsEnabled(input, false);
-        footer.Text = "Nur auf diesem Rechner";
+        footer.Text = L.Text("Nur auf diesem Rechner");
         FitToScreen();
         if (!IsVisible)
         {
@@ -311,11 +311,11 @@ sealed partial class LauncherWindow : Window
             if (history)
             {
                 var clips = store.All().Where(x => query.Length == 0 || x.Title.Contains(query, StringComparison.OrdinalIgnoreCase) || x.Text.Contains(query, StringComparison.OrdinalIgnoreCase) || x.Files.Any(f => Path.GetFileName(f).Contains(query, StringComparison.OrdinalIgnoreCase))).Take(200).ToList();
-                rows = (await Task.WhenAll(clips.Select(async x => { var picture = Thumbnail(x); if (picture == null && x.Files.Length > 0 && IsPicture(x.Files[0])) picture = await Icons.PreviewAsync(x.Files[0]); ImageSource? icon = picture ?? (x.Kind == "files" && x.Files.Length > 0 ? await Icons.ForAsync(new(x.Title, x.Files[0], "Datei", x.Subtitle)) : null); return new ViewItem(x.Title, (x.OriginName.Length > 0 ? "Von " + x.OriginName + " · " : "") + x.Subtitle, "", x, icon ?? (x.Kind == "text" ? Icons.TextSymbol() : null), picture); }))).ToList();
+                rows = (await Task.WhenAll(clips.Select(async x => { var picture = Thumbnail(x); if (picture == null && x.Files.Length > 0 && IsPicture(x.Files[0])) picture = await Icons.PreviewAsync(x.Files[0]); ImageSource? icon = picture ?? (x.Kind == "files" && x.Files.Length > 0 ? await Icons.ForAsync(new(x.Title, x.Files[0], "Datei", x.Subtitle)) : null); return new ViewItem(x.Title, (x.OriginName.Length > 0 ? L.Format("Von {0} · ", x.OriginName) : "") + x.Subtitle, "", x, icon ?? (x.Kind == "text" ? Icons.TextSymbol() : null), picture); }))).ToList();
             }
             else
                 rows = (await Task.WhenAll((await search.Search(query, token)).Select(async x => new ViewItem(x.Title, x.Detail, "", x, await Icons.ForAsync(x))))).ToList();
-            if (!history && (query.Length == 0 || SearchService.Rank("Verlauf", query) > 0 || SearchService.Rank("Zwischenablage", query) > 0))
+            if (!history && (query.Length == 0 || SearchService.Rank(L.Text("Verlauf"), query) > 0 || SearchService.Rank(L.Text("Zwischenablage"), query) > 0))
                 rows.Insert(0, HistoryAction());
             if (current != generation || token.IsCancellationRequested || editing)
                 return;
@@ -325,16 +325,16 @@ sealed partial class LauncherWindow : Window
             list.SelectedIndex = keep >= 0 ? keep : rows.Count > 0 ? 0 : -1;
             renderedQuery = query;
             if (!history)
-                Height = Math.Clamp(154 + Math.Min(rows.Count, 6) * 57, 240, 500);
+                Height = rows.Count == 0 ? 320 : Math.Clamp(154 + Math.Min(rows.Count, 6) * 57, 240, 500);
             FitToScreen();
-            section.Text = history ? $"{rows.Count} {(rows.Count == 1 ? "Eintrag" : "Einträge")}{(prefs.Paused ? " · Aufnahme pausiert" : "")}" : query.Length == 0 ? "Vorschläge" : "Suchergebnisse";
-            hint.Text = history ? "↑↓  Auswählen     ↵  Einfügen     esc  Ausblenden" : "↑↓  Auswählen     ↵  Öffnen     esc  Ausblenden";
+            section.Text = history ? $"{rows.Count} {(rows.Count == 1 ? L.Text("Eintrag") : L.Text("Einträge"))}{(prefs.Paused ? L.Text(" · Aufnahme pausiert") : "")}" : query.Length == 0 ? L.Text("Vorschläge") : L.Text("Suchergebnisse");
+            hint.Text = history ? L.Text("↑↓  Auswählen     ↵  Einfügen     esc  Ausblenden") : L.Text("↑↓  Auswählen     ↵  Öffnen     esc  Ausblenden");
             ShowEmptyState(rows.Count == 0, query);
             if (!history && search.IndexStatus.Length > 0)
-                footer.Text = "Dateiindex nicht verfügbar";
+                footer.Text = L.Text("Dateiindex nicht verfügbar");
         }
         catch (OperationCanceledException) { }
-        catch (Exception e) { footer.Text = "Suche: " + e.Message; }
+        catch (Exception e) { footer.Text = L.Text("Suche: ") + e.Message; }
     }
     static bool SameValue(object first, object second) => first is ClipEntry a && second is ClipEntry b ? a.Id == b.Id : first is SearchItem x && second is SearchItem y ? x.Path == y.Path : Equals(first, second);
     static IEnumerable<T> VisualChildren<T>(DependencyObject root) where T : DependencyObject
@@ -392,8 +392,8 @@ sealed partial class LauncherWindow : Window
         {
             Height = GridLength.Auto
         });
-        Add(preview, new TextBlock { Text = row.Preview != null ? "Bildvorschau" : item.Kind == "files" ? "Dateien" : "Textvorschau", FontSize = 13, FontWeight = FontWeights.Medium, Foreground = new SolidColorBrush(Color.FromRgb(226, 226, 233)) }, 0);
-        Add(preview, new TextBlock { Text = $"{ClipEntry.FormatBytes(item.Bytes)}  ·  {item.Created.ToLocalTime():dd.MM. · HH:mm}{(item.Pinned ? "  ·  Angeheftet" : "")}", FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(142, 143, 154)), Margin = new Thickness(0, 5, 0, 16) }, 1);
+        Add(preview, new TextBlock { Text = row.Preview != null ? L.Text("Bildvorschau") : item.Kind == "files" ? L.Text("Dateien") : L.Text("Textvorschau"), FontSize = 13, FontWeight = FontWeights.Medium, Foreground = new SolidColorBrush(Color.FromRgb(226, 226, 233)) }, 0);
+        Add(preview, new TextBlock { Text = $"{ClipEntry.FormatBytes(item.Bytes)}  ·  {item.Created.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentCulture)}{(item.Pinned ? L.Text("  ·  Angeheftet") : "")}", FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(142, 143, 154)), Margin = new Thickness(0, 5, 0, 16) }, 1);
         var document = new StackPanel();
         if (row.Preview != null)
             document.Children.Add(new Image { Source = row.Preview, MaxHeight = 180, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, 12) });
@@ -415,7 +415,7 @@ sealed partial class LauncherWindow : Window
         {
             Width = new GridLength(34)
         });
-        var copy = MakeButton("Kopieren", async () => await Copy(item, false));
+        var copy = MakeButton(L.Text("Kopieren"), async () => await Copy(item, false));
         copy.Background = new SolidColorBrush(Color.FromArgb(35, 10, 132, 255));
         copy.Foreground = new SolidColorBrush(Color.FromRgb(116, 184, 255));
         copy.FontSize = 12;
@@ -431,14 +431,14 @@ sealed partial class LauncherWindow : Window
             System.Windows.Automation.AutomationProperties.SetName(button, name);
             return button;
         }
-        var pin = IconButton("M8,2 L16,2 15,9 19,13 19,15 5,15 5,13 9,9 Z M12,15 L12,22", item.Pinned ? "Loslösen" : "Anheften", () => { store.Pin(item); _ = UpdateResults(); }, item.Pinned);
+        var pin = IconButton("M8,2 L16,2 15,9 19,13 19,15 5,15 5,13 9,9 Z M12,15 L12,22", item.Pinned ? L.Text("Loslösen") : L.Text("Anheften"), () => { store.Pin(item); _ = UpdateResults(); }, item.Pinned);
         Grid.SetColumn(pin, 1);
         actions.Children.Add(pin);
-        var trash = IconButton("M4,6 L20,6 M9,6 L9,3 15,3 15,6 M7,6 L8,21 16,21 17,6 M10,10 L10,17 M14,10 L14,17", "Eintrag löschen", () => { store.Delete(item); _ = UpdateResults(); });
+        var trash = IconButton("M4,6 L20,6 M9,6 L9,3 15,3 15,6 M7,6 L8,21 16,21 17,6 M10,10 L10,17 M14,10 L14,17", L.Text("Eintrag löschen"), () => { store.Delete(item); _ = UpdateResults(); });
         Grid.SetColumn(trash, 2);
         actions.Children.Add(trash);
         Add(preview, actions, 3);
-        Add(preview, new TextBlock { Text = "↵  Direkt einfügen", FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(133, 134, 147)), Margin = new Thickness(0, 11, 0, 2) }, 4);
+        Add(preview, new TextBlock { Text = L.Text("↵  Direkt einfügen"), FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(133, 134, 147)), Margin = new Thickness(0, 11, 0, 2) }, 4);
     }
     async void OnKey(object sender, KeyEventArgs e)
     {
@@ -518,7 +518,7 @@ sealed partial class LauncherWindow : Window
             Hide();
             bool inserted = await clipboard.Restore(clip, target, paste);
             if (paste && !inserted)
-                Program.Notify("In Zwischenablage kopiert · mit Strg + V einfügen");
+                Program.Notify(L.Text("In Zwischenablage kopiert · mit Strg + V einfügen"));
         }
         catch (Exception e) { OpenMode(true, false); footer.Text = e.Message; }
     }
@@ -610,12 +610,12 @@ sealed partial class LauncherWindow : Window
         UpdateLayout();
         bool noTyping = !VisualChildren<TextBox>(settings).Any();
         long chosen = 7;
-        ChooseSetting("Aufbewahrung", chosen, [(7, "1 Woche"), (30, "1 Monat")], x => chosen = x);
+        ChooseSetting("Aufbewahrung", chosen, [(7, L.Text("1 Woche")), (30, L.Text("1 Monat"))], x => chosen = x);
         Key(System.Windows.Input.Key.Escape);
         bool choiceCancelled = chosen == 7 && confirmation == null;
-        ChooseSetting("Aufbewahrung", chosen, [(7, "1 Woche"), (30, "1 Monat")], x => chosen = x);
+        ChooseSetting("Aufbewahrung", chosen, [(7, L.Text("1 Woche")), (30, L.Text("1 Monat"))], x => chosen = x);
         UpdateLayout();
-        var month = VisualChildren<Button>(confirmation!).First(x => x.Content is string text && text.Contains("1 Monat"));
+        var month = VisualChildren<Button>(confirmation!).First(x => x.Content is string text && text.Contains(L.Text("1 Monat")));
         month.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         bool choiceApplied = chosen == 30 && confirmation == null;
         Confirm("Testbestätigung", "Diese Vorschau löscht keine Daten.", () => Task.CompletedTask);
@@ -626,6 +626,8 @@ sealed partial class LauncherWindow : Window
         input.Text = "No-result-" + Guid.NewGuid();
         await UpdateResults();
         bool empty = emptyState.IsVisible;
+        OpenMode(false, false); input.Text = "No-result-" + Guid.NewGuid(); await UpdateResults(); UpdateLayout();
+        bool emptyFits = VisualChildren<FrameworkElement>(emptyState).Where(x => x is Image or TextBlock).All(x => { var bounds = x.TransformToAncestor(emptyState).TransformBounds(new Rect(x.RenderSize)); return bounds.Top >= 0 && bounds.Bottom <= emptyState.ActualHeight + 1; });
         Key(System.Windows.Input.Key.Escape);
         bool hidden = !IsVisible;
         return new
@@ -643,8 +645,9 @@ sealed partial class LauncherWindow : Window
             ChoiceAppliesValue = choiceApplied,
             EscapeCancelsSheet = cancelSheet,
             EmptyState = empty,
+            EmptyStateFits = emptyFits,
             EscapeHides = hidden,
-            Passed = immediate && first && entered && down && up && tabNavigates && settingsExclusive && tabs && noTyping && choiceCancelled && choiceApplied && cancelSheet && empty && hidden
+            Passed = immediate && first && entered && down && up && tabNavigates && settingsExclusive && tabs && noTyping && choiceCancelled && choiceApplied && cancelSheet && empty && emptyFits && hidden
         };
     }
     public async Task RenderPreview(string path, bool clipboardMode, int selected = 0)

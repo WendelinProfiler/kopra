@@ -42,7 +42,7 @@ static class SettingsCatalog
                 string? policy = Policy(entry), uri = policy == null ? entry.Descendants("PageID").Select(x => pages.GetValueOrDefault(x.Value)).FirstOrDefault(x => x != null) : "ms-settings:" + policy;
                 if (uri == null)
                     continue;
-                found.Add(new(name, uri, "Einstellung", "Windows-Einstellungen", Keywords: keywords));
+                found.Add(new(name, uri, "Einstellung", L.Text("Windows-Einstellungen"), Keywords: keywords));
             }
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Xml.XmlException or InvalidOperationException) { }

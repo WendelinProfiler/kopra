@@ -17,6 +17,8 @@ else
   xcrun lipo -create build/architectures/Kopra-arm64 build/architectures/Kopra-x86_64 -output "$app/Contents/MacOS/Kopra"
 fi
 cp vendor/BigInt/LICENSE.md "$app/Contents/Resources/BigInt-LICENSE.md"
+cp ../assets/localization.en.json ../assets/localization.de.json "$app/Contents/Resources/"
+cp -R en.lproj de.lproj "$app/Contents/Resources/"
 cp Info.plist "$app/Contents/Info.plist"
 icon=../assets/icon-1024.png
 if [[ ! -f "$icon" ]]; then icon=icon-1024.png; fi

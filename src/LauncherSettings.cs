@@ -36,9 +36,9 @@ sealed partial class LauncherWindow
             return;
         preview.Children.Clear();
         var panel = new StackPanel { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, MaxWidth = 330, Margin = new Thickness(20) };
-        panel.Children.Add(Vector("M19,10 A9,9 0 1 1 1,10 A9,9 0 1 1 19,10 M17,17 L25,25", 32));
-        panel.Children.Add(new TextBlock { Text = query.Length > 0 ? "Keine Ergebnisse" : history ? "Deine Zwischenablage" : "Keine Vorschläge", FontSize = 18, FontWeight = FontWeights.Medium, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 16, 0, 7) });
-        panel.Children.Add(new TextBlock { Text = query.Length > 0 ? "Versuche einen anderen Suchbegriff." : "Kopiere Text, Bilder, Dateien oder Ordner.\nDu findest sie anschließend hier wieder.", Foreground = Ink(163), FontSize = 12, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, LineHeight = 18 });
+        panel.Children.Add(new Image { Source = Icons.SearchSymbol(), Width = 32, Height = 32, HorizontalAlignment = HorizontalAlignment.Center, Stretch = Stretch.Uniform });
+        panel.Children.Add(new TextBlock { Text = query.Length > 0 ? L.Text("Keine Ergebnisse") : history ? L.Text("Deine Zwischenablage") : L.Text("Keine Vorschläge"), FontSize = 18, FontWeight = FontWeights.Medium, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 16, 0, 7) });
+        panel.Children.Add(new TextBlock { Text = query.Length > 0 ? L.Text("Versuche einen anderen Suchbegriff.") : L.Text("Kopiere Text, Bilder, Dateien oder Ordner.\nDu findest sie anschließend hier wieder."), Foreground = Ink(163), FontSize = 12, TextWrapping = TextWrapping.Wrap, TextAlignment = TextAlignment.Center, LineHeight = 18 });
         emptyState.Child = panel;
     }
     void ShowSettings()
@@ -46,7 +46,7 @@ sealed partial class LauncherWindow
         editing = true;
         queryStop?.Cancel();
         navigation.Visibility = Visibility.Visible;
-        contextTitle.Text = "Einstellungen";
+        contextTitle.Text = L.Text("Einstellungen");
         body.Visibility = Visibility.Collapsed;
         section.Visibility = Visibility.Collapsed;
         foreach (UIElement child in content.Children)
@@ -55,16 +55,16 @@ sealed partial class LauncherWindow
         settings.Visibility = Visibility.Visible;
         Height = 590;
         FitToScreen();
-        hint.Text = "Tab  Auswählen     esc  Ausblenden";
-        footer.Text = "Änderungen werden automatisch gespeichert";
+        hint.Text = L.Text("Tab  Auswählen     esc  Ausblenden");
+        footer.Text = L.Text("Änderungen werden automatisch gespeichert");
         var panel = new StackPanel { Margin = new Thickness(10, 4, 10, 8) };
         settings.Content = panel;
         panel.Children.Add(new TextBlock { Text = "Kopra", FontSize = 25, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 3, 0, 5) });
-        panel.Children.Add(new TextBlock { Text = "Deine Suche. Deine Zwischenablage. Lokal auf deinem Rechner.", FontSize = 12, Foreground = Ink(165), Margin = new Thickness(0, 0, 0, 18) });
+        panel.Children.Add(new TextBlock { Text = L.Text("Deine Suche. Deine Zwischenablage. Lokal auf deinem Rechner."), FontSize = 12, Foreground = Ink(165), Margin = new Thickness(0, 0, 0, 18) });
         var tabs = new System.Windows.Controls.Primitives.UniformGrid { Columns = 4 };
         var tabsBorder = new Border { Background = new SolidColorBrush(Color.FromArgb(20, 255, 255, 255)), CornerRadius = new CornerRadius(8), Padding = new Thickness(3), Child = tabs, Margin = new Thickness(0, 0, 0, 18) };
         panel.Children.Add(tabsBorder);
-        var labels = new[] { "Allgemein", "Verlauf", "Geräte", "Datenschutz" };
+        var labels = new[] { L.Text("Allgemein"), L.Text("Verlauf"), L.Text("Geräte"), L.Text("Datenschutz") };
         for (int i = 0; i < labels.Length; i++)
         {
             int tab = i;
@@ -73,7 +73,7 @@ sealed partial class LauncherWindow
             button.Padding = new Thickness(10, 7, 10, 7);
             button.FontSize = 12;
             button.Background = i == settingsTab ? new SolidColorBrush(Color.FromArgb(40, 255, 255, 255)) : Brushes.Transparent;
-            System.Windows.Automation.AutomationProperties.SetHelpText(button, i == settingsTab ? "Ausgewählt" : "");
+            System.Windows.Automation.AutomationProperties.SetHelpText(button, i == settingsTab ? L.Text("Ausgewählt") : "");
             tabs.Children.Add(button);
         }
         StackPanel Group(string title, string? note = null)
@@ -114,8 +114,8 @@ sealed partial class LauncherWindow
             row.Children.Add(text);
             var available = choices.ToList();
             if (!available.Any(x => x.Value == value))
-                available.Add((value, label.Contains("behalten") ? value + " Tage (aktuell)" : label.Contains("Einträge") ? value + " Einträge (aktuell)" : ClipEntry.FormatBytes(value * 1048576) + " (aktuell)"));
-            var button = MakeButton(available.First(x => x.Value == value).Label + "  ⌄", () => ChooseSetting(label, value, available, chosen => { change(chosen); Save(); _ = clipboard.Maintain(); ShowSettings(); }), label + " ändern");
+                available.Add((value, (label.Contains(L.Text("behalten")) || label.StartsWith("Keep", StringComparison.Ordinal)) ? value + L.Text(" Tage (aktuell)") : label.Contains(L.Text("Einträge")) ? value + L.Text(" Einträge (aktuell)") : ClipEntry.FormatBytes(value * 1048576) + L.Text(" (aktuell)")));
+            var button = MakeButton(available.First(x => x.Value == value).Label + "  ⌄", () => ChooseSetting(label, value, available, chosen => { change(chosen); Save(); _ = clipboard.Maintain(); ShowSettings(); }), label + L.Text(" ändern"));
             button.FontSize = 12;
             button.MinWidth = 135;
             button.Padding = new Thickness(11, 7, 11, 7);
@@ -138,16 +138,18 @@ sealed partial class LauncherWindow
         }
         if (settingsTab == 0)
         {
-            var general = Group("Bedienung");
-            ActionRow(general, "Suche öffnen · " + (Shortcuts?.Label(false) ?? "Windows-Taste"), () => RecordShortcut(false));
-            ActionRow(general, "Verlauf öffnen · " + (Shortcuts?.Label(true) ?? "Strg + Umschalt + V"), () => RecordShortcut(true));
-            Toggle(general, "Nach Anmeldung starten", prefs.AutoStart, x => { prefs.AutoStart = x; Program.SetAutoStart(x); });
-            Toggle(general, "Zwischenablageverlauf pausieren", prefs.Paused, x => prefs.Paused = x);
-            var folders = Group("Suchordner", "Apps und Windows-Einstellungen sind immer durchsuchbar. Diese Ordner ergänzen die Dateisuche.");
+            var language = Group(L.Text("Sprache"));
+            ActionRow(language, prefs.Language == "de" ? "Deutsch" : "English", () => ChooseSetting(L.Text("Sprache der App"), prefs.Language == "de" ? 1 : 0, new (long Value, string Label)[] { (0, "English"), (1, "Deutsch") }, value => { prefs.Language = value == 1 ? "de" : "en"; Save(); L.Use(prefs.Language); _ = search.Refresh(); ShowSettings(); }));
+            var general = Group(L.Text("Bedienung"));
+            ActionRow(general, L.Text("Suche öffnen · ") + (Shortcuts?.Label(false) ?? L.Text("Windows-Taste")), () => RecordShortcut(false));
+            ActionRow(general, L.Text("Verlauf öffnen · ") + (Shortcuts?.Label(true) ?? L.Text("Strg + Umschalt + V")), () => RecordShortcut(true));
+            Toggle(general, L.Text("Nach Anmeldung starten"), prefs.AutoStart, x => { prefs.AutoStart = x; Program.SetAutoStart(x); });
+            Toggle(general, L.Text("Zwischenablageverlauf pausieren"), prefs.Paused, x => prefs.Paused = x);
+            var folders = Group(L.Text("Suchordner"), L.Text("Apps und Windows-Einstellungen sind immer durchsuchbar. Diese Ordner ergänzen die Dateisuche."));
             foreach (var path in prefs.SearchFolders.ToArray())
             {
                 var row = new DockPanel { Margin = new Thickness(0, 8, 0, 8) };
-                var remove = MakeButton("Entfernen", () => { prefs.SearchFolders.Remove(path); Save(); _ = search.Refresh(); ShowSettings(); });
+                var remove = MakeButton(L.Text("Entfernen"), () => { prefs.SearchFolders.Remove(path); Save(); _ = search.Refresh(); ShowSettings(); });
                 remove.FontSize = 11;
                 remove.Padding = new Thickness(8, 4, 8, 4);
                 DockPanel.SetDock(remove, Dock.Right);
@@ -155,14 +157,14 @@ sealed partial class LauncherWindow
                 row.Children.Add(new TextBlock { Text = path, FontSize = 12, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new Thickness(0, 0, 8, 0) });
                 Row(folders, row);
             }
-            ActionRow(folders, "Suchordner hinzufügen …", () => { activating = true; try { using var picker = new System.Windows.Forms.FolderBrowserDialog(); if (picker.ShowDialog() == System.Windows.Forms.DialogResult.OK) { prefs.SearchFolders.Add(picker.SelectedPath); prefs.SearchFolders = prefs.SearchFolders.Distinct(StringComparer.OrdinalIgnoreCase).ToList(); Save(); _ = search.Refresh(); ShowSettings(); } } finally { activating = false; Activate(); } });
-            var shortcuts = Group("Tastatur");
-            Row(shortcuts, new TextBlock { Text = "Windows     Suche öffnen\nStrg + Umschalt + V     Verlauf öffnen\nStrg + Tab     Suche und Verlauf wechseln\n↑ / ↓     Auswählen     ·     Enter     Öffnen / Einfügen\nEscape     Ausblenden", FontSize = 12, LineHeight = 24, Foreground = Ink(190), Margin = new Thickness(0, 9, 0, 9) });
+            ActionRow(folders, L.Text("Suchordner hinzufügen …"), () => { activating = true; try { using var picker = new System.Windows.Forms.FolderBrowserDialog(); if (picker.ShowDialog() == System.Windows.Forms.DialogResult.OK) { prefs.SearchFolders.Add(picker.SelectedPath); prefs.SearchFolders = prefs.SearchFolders.Distinct(StringComparer.OrdinalIgnoreCase).ToList(); Save(); _ = search.Refresh(); ShowSettings(); } } finally { activating = false; Activate(); } });
+            var shortcuts = Group(L.Text("Tastatur"));
+            Row(shortcuts, new TextBlock { Text = L.Format("{0}     Suche öffnen\n{1}     Verlauf öffnen\nStrg + Tab     Suche und Verlauf wechseln\n↑ / ↓     Auswählen     ·     Enter     Öffnen / Einfügen\nEscape     Ausblenden", Shortcuts?.Label(false) ?? L.Text("Windows-Taste"), Shortcuts?.Label(true) ?? L.Text("Strg + Umschalt + V")), FontSize = 12, LineHeight = 24, Foreground = Ink(190), Margin = new Thickness(0, 9, 0, 9) });
         }
         else if (settingsTab == 1)
         {
-            var storage = Group("Speicherbelegung");
-            var storageText = new TextBlock { Text = "Speicher wird ermittelt …", FontSize = 12, LineHeight = 20, Foreground = Ink(195), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 10, 0, 9) };
+            var storage = Group(L.Text("Speicherbelegung"));
+            var storageText = new TextBlock { Text = L.Text("Speicher wird ermittelt …"), FontSize = 12, LineHeight = 20, Foreground = Ink(195), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 10, 0, 9) };
             Row(storage, storageText);
             var meter = new ProgressBar { Height = 4, Minimum = 0, Maximum = 1, Foreground = new SolidColorBrush(Color.FromRgb(10, 132, 255)), Background = Ink(65), BorderThickness = new Thickness(0), Margin = new Thickness(0, 0, 0, 12) };
             storage.Children.Add(meter);
@@ -171,19 +173,19 @@ sealed partial class LauncherWindow
                 try
                 {
                     var state = await Task.Run(() => store.Storage);
-                    storageText.Text = $"{ClipEntry.FormatBytes(state.UsedBytes)} von {ClipEntry.FormatBytes(state.BudgetBytes)} verwendet · {state.Entries} Einträge\nAngeheftet: {ClipEntry.FormatBytes(state.PinnedBytes)} · Laufwerk frei: {ClipEntry.FormatBytes(state.FreeDiskBytes)}";
+                    storageText.Text = L.Format("{0} von {1} verwendet \u00B7 {2} Eintr\u00E4ge\nAngeheftet: {3} \u00B7 Laufwerk frei: {4}", ClipEntry.FormatBytes(state.UsedBytes), ClipEntry.FormatBytes(state.BudgetBytes), state.Entries, ClipEntry.FormatBytes(state.PinnedBytes), ClipEntry.FormatBytes(state.FreeDiskBytes));
                     meter.Value = state.BudgetBytes > 0 ? Math.Clamp((double)(state.UsedBytes + state.ReservedBytes) / state.BudgetBytes, 0, 1) : 0;
                 }
-                catch { storageText.Text = "Speicheranzeige momentan nicht verfügbar"; }
+                catch { storageText.Text = L.Text("Speicheranzeige momentan nicht verfügbar"); }
             }
             Load();
-            var days = new (long, string)[] { (1, "1 Tag"), (7, "1 Woche"), (14, "2 Wochen"), (30, "1 Monat"), (90, "3 Monate"), (365, "1 Jahr") };
-            var retention = Group("Wie lange soll dein Verlauf bleiben?", "Angeheftete Einträge bleiben erhalten – unabhängig von diesen Einstellungen.");
-            Choice(retention, "Texte behalten", prefs.RetentionDays, days, x => prefs.RetentionDays = (int)x, "Ältere Texte werden automatisch entfernt.");
-            Choice(retention, "Bilder und Dateien behalten", prefs.BinaryRetentionDays, days, x => prefs.BinaryRetentionDays = (int)x, "Gilt auch für kopierte Ordner.");
-            var limits = Group("Wie viel Platz darf der Verlauf nutzen?", "Ist das Limit erreicht, werden zuerst ältere, nicht angeheftete Einträge entfernt. Deine Originaldateien bleiben erhalten.");
-            Choice(limits, "Platz für den gesamten Verlauf", prefs.StorageLimitMb, [(512, "512 MB"), (1024, "1 GB"), (2048, "2 GB · empfohlen"), (5120, "5 GB"), (10240, "10 GB")], x => prefs.StorageLimitMb = x, "Enthält auch angeheftete Inhalte.");
-            var advanced = MakeButton(advancedSettings ? "Weitere Schutzgrenzen  ⌃" : "Weitere Schutzgrenzen  ⌄", () => { advancedSettings = !advancedSettings; ShowSettings(); });
+            var days = new (long, string)[] { (1, L.Text("1 Tag")), (7, L.Text("1 Woche")), (14, L.Text("2 Wochen")), (30, L.Text("1 Monat")), (90, L.Text("3 Monate")), (365, L.Text("1 Jahr")) };
+            var retention = Group(L.Text("Wie lange soll dein Verlauf bleiben?"), L.Text("Angeheftete Einträge bleiben erhalten – unabhängig von diesen Einstellungen."));
+            Choice(retention, L.Text("Texte behalten"), prefs.RetentionDays, days, x => prefs.RetentionDays = (int)x, L.Text("Ältere Texte werden automatisch entfernt."));
+            Choice(retention, L.Text("Bilder und Dateien behalten"), prefs.BinaryRetentionDays, days, x => prefs.BinaryRetentionDays = (int)x, L.Text("Gilt auch für kopierte Ordner."));
+            var limits = Group(L.Text("Wie viel Platz darf der Verlauf nutzen?"), L.Text("Ist das Limit erreicht, werden zuerst ältere, nicht angeheftete Einträge entfernt. Deine Originaldateien bleiben erhalten."));
+            Choice(limits, L.Text("Platz für den gesamten Verlauf"), prefs.StorageLimitMb, [(512, "512 MB"), (1024, "1 GB"), (2048, L.Text("2 GB · empfohlen")), (5120, "5 GB"), (10240, "10 GB")], x => prefs.StorageLimitMb = x, L.Text("Enthält auch angeheftete Inhalte."));
+            var advanced = MakeButton(advancedSettings ? L.Text("Weitere Schutzgrenzen  ⌃") : L.Text("Weitere Schutzgrenzen  ⌄"), () => { advancedSettings = !advancedSettings; ShowSettings(); });
             advanced.Background = Brushes.Transparent;
             advanced.HorizontalAlignment = HorizontalAlignment.Left;
             advanced.FontSize = 12;
@@ -191,22 +193,22 @@ sealed partial class LauncherWindow
             panel.Children.Add(advanced);
             if (advancedSettings)
             {
-                var safety = Group("Schützt deinen Speicher", "Diese Grenzen sind bereits sinnvoll voreingestellt. Werden sie erreicht, pausiert die Sicherung neuer Inhalte.");
-                Choice(safety, "Größe einer einzelnen Kopie", prefs.MaxEntryMb, [(32, "32 MB"), (128, "128 MB"), (256, "256 MB · empfohlen"), (512, "512 MB"), (1024, "1 GB")], x => prefs.MaxEntryMb = x, "Größere Kopien bleiben in der Zwischenablage, werden aber nicht im Verlauf gesichert.");
-                Choice(safety, "Auf dem Laufwerk freihalten", prefs.MinFreeDiskMb, [(1024, "1 GB"), (2048, "2 GB"), (5120, "5 GB · empfohlen"), (10240, "10 GB"), (20480, "20 GB")], x => prefs.MinFreeDiskMb = x, "Stoppt neue Sicherungen, bevor dein Laufwerk voll wird.");
-                Choice(safety, "Höchstens gespeicherte Einträge", prefs.MaxHistoryEntries, [(100, "100 Einträge"), (500, "500 Einträge"), (1000, "1.000 Einträge"), (2000, "2.000 · empfohlen"), (5000, "5.000 Einträge")], x => prefs.MaxHistoryEntries = (int)x, "Angeheftete Einträge werden nicht mitgezählt.");
+                var safety = Group(L.Text("Schützt deinen Speicher"), L.Text("Diese Grenzen sind bereits sinnvoll voreingestellt. Werden sie erreicht, pausiert die Sicherung neuer Inhalte."));
+                Choice(safety, L.Text("Größe einer einzelnen Kopie"), prefs.MaxEntryMb, [(32, "32 MB"), (128, "128 MB"), (256, "256 MB · empfohlen"), (512, "512 MB"), (1024, "1 GB")], x => prefs.MaxEntryMb = x, L.Text("Größere Kopien bleiben in der Zwischenablage, werden aber nicht im Verlauf gesichert."));
+                Choice(safety, L.Text("Auf dem Laufwerk freihalten"), prefs.MinFreeDiskMb, [(1024, "1 GB"), (2048, "2 GB"), (5120, L.Text("5 GB · empfohlen")), (10240, "10 GB"), (20480, "20 GB")], x => prefs.MinFreeDiskMb = x, L.Text("Stoppt neue Sicherungen, bevor dein Laufwerk voll wird."));
+                Choice(safety, L.Text("Höchstens gespeicherte Einträge"), prefs.MaxHistoryEntries, [(100, L.Text("100 Einträge")), (500, L.Text("500 Einträge")), (1000, L.Text("1.000 Einträge")), (2000, "2.000 · empfohlen"), (5000, L.Text("5.000 Einträge"))], x => prefs.MaxHistoryEntries = (int)x, L.Text("Angeheftete Einträge werden nicht mitgezählt."));
             }
             var actions = Group("Verwalten");
-            ActionRow(actions, "Jetzt bereinigen", async () => { await clipboard.Maintain(); if (editing) ShowSettings(); });
-            ActionRow(actions, "Speicherordner öffnen", () => Process.Start(new ProcessStartInfo("explorer.exe", root) { UseShellExecute = true }));
+            ActionRow(actions, L.Text("Jetzt bereinigen"), async () => { await clipboard.Maintain(); if (editing) ShowSettings(); });
+            ActionRow(actions, L.Text("Speicherordner öffnen"), () => Process.Start(new ProcessStartInfo("explorer.exe", root) { UseShellExecute = true }));
         }
         else if (settingsTab == 3)
         {
-            var privacy = Group("Von diesen Apps nichts speichern", "Vertraulich markierte Inhalte werden grundsätzlich nicht gespeichert. Der Verlauf bleibt lokal und ist nicht zusätzlich verschlüsselt.");
+            var privacy = Group(L.Text("Von diesen Apps nichts speichern"), L.Text("Vertraulich markierte Inhalte werden grundsätzlich nicht gespeichert. Der Verlauf bleibt lokal und ist nicht zusätzlich verschlüsselt."));
             foreach (var excluded in prefs.ExcludedApps.ToArray())
             {
                 var row = new DockPanel { Margin = new Thickness(0, 9, 0, 9) };
-                var remove = MakeButton("Entfernen", () => { prefs.ExcludedApps.Remove(excluded); Save(); ShowSettings(); });
+                var remove = MakeButton(L.Text("Entfernen"), () => { prefs.ExcludedApps.Remove(excluded); Save(); ShowSettings(); });
                 remove.FontSize = 11;
                 remove.Padding = new Thickness(8, 4, 8, 4);
                 DockPanel.SetDock(remove, Dock.Right);
@@ -214,10 +216,10 @@ sealed partial class LauncherWindow
                 row.Children.Add(new TextBlock { Text = excluded, VerticalAlignment = VerticalAlignment.Center, FontSize = 12 });
                 Row(privacy, row);
             }
-            ActionRow(privacy, "App ausschließen …", () => { activating = true; try { var picker = new Microsoft.Win32.OpenFileDialog { Title = "App auswählen, aus der nichts gespeichert werden soll", Filter = "Apps (*.exe)|*.exe", CheckFileExists = true }; if (picker.ShowDialog(this) == true) { var name = System.IO.Path.GetFileNameWithoutExtension(picker.FileName); if (!prefs.ExcludedApps.Contains(name, StringComparer.OrdinalIgnoreCase)) prefs.ExcludedApps.Add(name); Save(); ShowSettings(); } } finally { activating = false; Activate(); } });
-            var clear = Group("Verlauf löschen", "Gelöscht werden ausschließlich die Sicherungen der App. Deine Originaldateien bleiben erhalten.");
-            ActionRow(clear, "Nicht angehefteten Verlauf löschen …", () => Confirm("Verlauf löschen?", "Alle nicht angehefteten Einträge und ihre gespeicherten Kopien werden gelöscht. Angeheftete Einträge bleiben erhalten.", async () => { await clipboard.Maintain(true); ShowSettings(); }), true);
-            ActionRow(clear, "Gesamten Verlauf löschen …", () => Confirm("Gesamten Verlauf löschen?", "Auch angeheftete Einträge werden gelöscht und die aktuelle Windows-Zwischenablage wird geleert. Das kann nicht rückgängig gemacht werden.", async () => { if (await clipboard.Maintain(true, true)) { try { Clipboard.Clear(); } catch (System.Runtime.InteropServices.COMException) { } } ShowSettings(); }), true);
+            ActionRow(privacy, L.Text("App ausschließen …"), () => { activating = true; try { var picker = new Microsoft.Win32.OpenFileDialog { Title = L.Text("App auswählen, aus der nichts gespeichert werden soll"), Filter = "Apps (*.exe)|*.exe", CheckFileExists = true }; if (picker.ShowDialog(this) == true) { var name = System.IO.Path.GetFileNameWithoutExtension(picker.FileName); if (!prefs.ExcludedApps.Contains(name, StringComparer.OrdinalIgnoreCase)) prefs.ExcludedApps.Add(name); Save(); ShowSettings(); } } finally { activating = false; Activate(); } });
+            var clear = Group(L.Text("Verlauf löschen"), L.Text("Gelöscht werden ausschließlich die Sicherungen der App. Deine Originaldateien bleiben erhalten."));
+            ActionRow(clear, L.Text("Nicht angehefteten Verlauf löschen …"), () => Confirm(L.Text("Verlauf löschen?"), L.Text("Alle nicht angehefteten Einträge und ihre gespeicherten Kopien werden gelöscht. Angeheftete Einträge bleiben erhalten."), async () => { await clipboard.Maintain(true); ShowSettings(); }), true);
+            ActionRow(clear, L.Text("Gesamten Verlauf löschen …"), () => Confirm(L.Text("Gesamten Verlauf löschen?"), L.Text("Auch angeheftete Einträge werden gelöscht und die aktuelle Windows-Zwischenablage wird geleert. Das kann nicht rückgängig gemacht werden."), async () => { if (await clipboard.Maintain(true, true)) { try { Clipboard.Clear(); } catch (System.Runtime.InteropServices.COMException) { } } ShowSettings(); }), true);
         }
         if (settingsTab == 2)
             PopulateDeviceSettings(panel);
@@ -238,13 +240,13 @@ sealed partial class LauncherWindow
             button.FontSize = 13;
             button.Padding = new Thickness(12, 9, 12, 9);
             button.Background = choice.Value == selected ? new SolidColorBrush(Color.FromArgb(70, 10, 132, 255)) : Brushes.Transparent;
-            System.Windows.Automation.AutomationProperties.SetName(button, choice.Label + (choice.Value == selected ? ", ausgewählt" : ""));
+            System.Windows.Automation.AutomationProperties.SetName(button, choice.Label + (choice.Value == selected ? L.Text(", ausgewählt") : ""));
             buttons.Add(button);
             options.Children.Add(button);
         }
         var scroll = new ScrollViewer { Content = options, MaxHeight = 290, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled };
         panel.Children.Add(scroll);
-        var cancel = MakeButton("Abbrechen", () => DismissConfirmation());
+        var cancel = MakeButton(L.Text("Abbrechen"), () => DismissConfirmation());
         cancel.Margin = new Thickness(0, 14, 0, 0);
         panel.Children.Add(cancel);
         confirmation = new Border { Background = new SolidColorBrush(Color.FromArgb(155, 0, 0, 0)), CornerRadius = new CornerRadius(15), Child = new Border { Width = Math.Min(360, Width - 60), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, CornerRadius = new CornerRadius(15), Background = Ink(44), Child = panel } };
@@ -280,8 +282,8 @@ sealed partial class LauncherWindow
         {
             Width = new GridLength(1, GridUnitType.Star)
         });
-        var cancel = MakeButton("Abbrechen", () => DismissConfirmation());
-        var delete = MakeButton("Löschen", async () => { DismissConfirmation(); await action(); });
+        var cancel = MakeButton(L.Text("Abbrechen"), () => DismissConfirmation());
+        var delete = MakeButton(L.Text("Löschen"), async () => { DismissConfirmation(); await action(); });
         delete.Background = new SolidColorBrush(Color.FromRgb(190, 55, 63));
         Grid.SetColumn(delete, 1);
         buttons.Children.Add(cancel);

@@ -10,7 +10,7 @@ static class PairingCrypto
     public static byte[] Decode(string value, int maximum = 1024)
     {
         if (value.Length > maximum)
-            throw new IOException("Code zu lang");
+            throw new IOException(L.Text("Code zu lang"));
         string text = value.Replace('-', '+').Replace('_', '/');
         return Convert.FromBase64String(text.PadRight((text.Length + 3) / 4 * 4, '='));
     }
@@ -22,7 +22,7 @@ static class PairingCrypto
     public static byte[] Secret(ECDiffieHellman key, byte[] publicKey)
     {
         if (publicKey.Length != 65 || publicKey[0] != 4)
-            throw new IOException("Ungültiger Geräteschlüssel");
+            throw new IOException(L.Text("Ungültiger Geräteschlüssel"));
         using var peer = ECDiffieHellman.Create(new ECParameters { Curve = ECCurve.NamedCurves.nistP256, Q = new ECPoint { X = publicKey[1..33], Y = publicKey[33..65] } });
         return key.DeriveRawSecretAgreement(peer.PublicKey);
     }

@@ -55,16 +55,16 @@ sealed class StorageBudget
             var snap = Snapshot();
             long reserve = Math.Max(0, Policy.MinFreeDiskMb) * 1048576;
             if (snap.FreeDiskBytes < incoming + reserve + DatabaseHeadroom)
-                throw new IOException("Sicherung pausiert: Der freie Festplattenplatz würde unter die eingestellte Reserve fallen.");
+                throw new IOException(L.Text("Sicherung pausiert: Der freie Festplattenplatz würde unter die eingestellte Reserve fallen."));
             if (incoming + DatabaseHeadroom > snap.BudgetBytes)
-                throw new IOException("Nicht gespeichert: Dieser Eintrag passt nicht in das gesamte Speicherbudget.");
+                throw new IOException(L.Text("Nicht gespeichert: Dieser Eintrag passt nicht in das gesamte Speicherbudget."));
             var candidates = entries().Where(x => !x.Pinned).OrderBy(x => x.Created).ToList();
             long required = snap.UsedBytes + snap.ReservedBytes + incoming + DatabaseHeadroom - snap.BudgetBytes;
             if (!allowEviction && required > 0)
-                throw new IOException("Speicherbudget ausgeschöpft.");
+                throw new IOException(L.Text("Speicherbudget ausgeschöpft."));
             long removable = candidates.Sum(x => DirectoryBytes(Path.Combine(root, "objects", x.Id)) + System.Text.Encoding.UTF8.GetByteCount(System.Text.Json.JsonSerializer.Serialize(x)) * 2L);
             if (required > 0 && required > removable)
-                throw new IOException("Sicherung pausiert: Angeheftete Inhalte oder andere Verlaufsdaten belegen das Speicherbudget. Bitte Speicher freigeben oder das Budget erhöhen.");
+                throw new IOException(L.Text("Sicherung pausiert: Angeheftete Inhalte oder andere Verlaufsdaten belegen das Speicherbudget. Bitte Speicher freigeben oder das Budget erhöhen."));
             int unpinned = candidates.Count;
             foreach (var entry in candidates)
             {
@@ -77,7 +77,7 @@ sealed class StorageBudget
             }
             snap = Snapshot();
             if (snap.UsedBytes + snap.ReservedBytes + incoming + DatabaseHeadroom > snap.BudgetBytes)
-                throw new IOException("Sicherung pausiert: Speicherbudget bleibt ausgeschöpft.");
+                throw new IOException(L.Text("Sicherung pausiert: Speicherbudget bleibt ausgeschöpft."));
             active.Add(id, incoming);
             return new Ticket(this, id);
         }
@@ -88,9 +88,9 @@ sealed class StorageBudget
         {
             var snap = Snapshot();
             if (snap.FreeDiskBytes < Math.Max(0, Policy.MinFreeDiskMb) * 1048576 + 1048576)
-                throw new IOException("Kopiervorgang gestoppt: Die freie Speicherreserve wurde erreicht.");
+                throw new IOException(L.Text("Kopiervorgang gestoppt: Die freie Speicherreserve wurde erreicht."));
             if (snap.UsedBytes + snap.ReservedBytes + DatabaseHeadroom > snap.BudgetBytes)
-                throw new IOException("Kopiervorgang gestoppt: Das Speicherbudget wurde erreicht.");
+                throw new IOException(L.Text("Kopiervorgang gestoppt: Das Speicherbudget wurde erreicht."));
         }
     }
     public bool IsActive(string id)

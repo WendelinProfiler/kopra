@@ -1,0 +1,2 @@
+"NSCameraUsageDescription" = "Scans the pairing code on your Windows PC. Kopra does not save camera images.";
+"NSLocalNetworkUsageDescription" = "Shares clipboard copies with your paired Windows PC over the local network.";

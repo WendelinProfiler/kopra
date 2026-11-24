@@ -16,7 +16,7 @@ static class CodeCrypto
     {
         var bytes = value.ToByteArray(isUnsigned: true, isBigEndian: true);
         if (bytes.Length > 256)
-            throw new IOException("Ungültiger Schlüsselaustausch");
+            throw new IOException(L.Text("Ungültiger Schlüsselaustausch"));
         return [.. new byte[256 - bytes.Length], .. bytes];
     }
     public static BigInteger Random() => Number(RandomNumberGenerator.GetBytes(32)) + 1;

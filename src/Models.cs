@@ -3,6 +3,7 @@ namespace Kopra;
 
 public sealed class Preferences
 {
+    public string Language { get; set; } = "en";
     public int RetentionDays { get; set; } = 30;
     public long StorageLimitMb { get; set; } = 2048;
     public long MaxEntryMb { get; set; } = 256;
@@ -53,7 +54,14 @@ public sealed record ClipEntry(string Id, string Kind, string Title, string Text
 {
     public string OriginDevice { get; init; } = "";
     public string OriginName { get; init; } = "";
-    public string Subtitle => $"{(Pinned ? "Angeheftet · " : "")}{(Kind == "text" ? "Text" : Kind == "image" ? "Bild" : Files.Length == 1 ? (Directory.Exists(Files[0]) ? "Ordner" : new[] { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".heic" }.Contains(Path.GetExtension(Files[0]), StringComparer.OrdinalIgnoreCase) ? "Bilddatei" : "Datei") : $"{Files.Length} Objekte")} · {FormatBytes(Bytes)} · {Created.ToLocalTime():dd.MM. HH:mm}";
+    public string Subtitle
+    {
+        get
+        {
+            string kind = Kind == "text" ? L.Text("Text") : Kind == "image" ? L.Text("Bild") : Files.Length == 1 ? L.Text(Directory.Exists(Files[0]) ? "Ordner" : new[] { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".heic" }.Contains(Path.GetExtension(Files[0]), StringComparer.OrdinalIgnoreCase) ? "Bilddatei" : "Datei") : L.Format("{0} Objekte", Files.Length);
+            return (Pinned ? L.Text("Angeheftet") + " · " : "") + kind + " · " + FormatBytes(Bytes) + " · " + Created.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentCulture);
+        }
+    }
     public string Glyph => Kind == "text" ? "≡" : Kind == "image" ? "▧" : "▱";
     public static string FormatBytes(long value) => value >= 1073741824 ? $"{value / 1073741824d:0.#} GB" : value >= 1048576 ? $"{value / 1048576d:0.#} MB" : value >= 1024 ? $"{value / 1024d:0.#} KB" : $"{value} B";
 }

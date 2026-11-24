@@ -4,6 +4,7 @@ static class Regression
 {
     public static int Run()
     {
+        L.Use("de");
         string root = Path.Combine(Path.GetTempPath(), "Kopra-tests-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         int cases = 0;
@@ -113,6 +114,7 @@ static class Regression
             cases += StorageRegression.Run(root);
             cases += SyncRegression.Run(root);
             cases += PairingRegression.Run();
+            cases += LocalizationRegression.Run(root);
             File.WriteAllText(Path.Combine(root, "test-result.txt"), $"PASS {cases} cases");
             Console.WriteLine($"PASS {cases} cases");
             File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "self-test-result.txt"), $"PASS {cases} cases");

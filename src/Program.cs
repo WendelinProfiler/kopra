@@ -45,8 +45,9 @@ static class Program
         string activeRoot = isolated ? Path.Combine(Path.GetTempPath(), "Kopra-ui-" + Guid.NewGuid().ToString("N")) : Root;
         Directory.CreateDirectory(activeRoot);
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-        app.DispatcherUnhandledException += (_, e) => { try { File.AppendAllText(Path.Combine(activeRoot, "errors.log"), DateTime.UtcNow.ToString("O") + " " + e.Exception.GetType().Name + " " + e.Exception.StackTrace + Environment.NewLine); } catch { } e.Handled = true; Notify("Kopra: Aktion konnte nicht abgeschlossen werden"); };
+        app.DispatcherUnhandledException += (_, e) => { try { File.AppendAllText(Path.Combine(activeRoot, "errors.log"), DateTime.UtcNow.ToString("O") + " " + e.Exception.GetType().Name + " " + e.Exception.StackTrace + Environment.NewLine); } catch { } e.Handled = true; Notify(L.Text("Kopra: Aktion konnte nicht abgeschlossen werden")); };
         Preferences prefs = isolated ? new Preferences { MinFreeDiskMb = 0, AutoStart = false } : Preferences.Load(Root);
+        L.Use(prefs.Language);
         using var store = new HistoryStore(activeRoot, prefs);
         using var clipboard = new ClipboardService(store, prefs);
         var search = new SearchService(prefs, store);
@@ -76,14 +77,15 @@ static class Program
                 StoragePolicyVersion = prefs.StoragePolicyVersion,
                 CleanupIntervalMinutes = 15
             }));
-            tray = new System.Windows.Forms.NotifyIcon { Text = "Kopra · Windows / Strg+Umschalt+V", Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? System.Drawing.SystemIcons.Application, Visible = true };
+            tray = new System.Windows.Forms.NotifyIcon { Text = "Kopra", Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath!) ?? System.Drawing.SystemIcons.Application, Visible = true };
             var menu = new System.Windows.Forms.ContextMenuStrip();
-            menu.Items.Add("Suche öffnen", null, (_, _) => window.OpenMode(false));
-            menu.Items.Add("Zwischenablageverlauf", null, (_, _) => window.OpenMode(true));
-            menu.Items.Add("Verlauf pausieren", null, (_, _) => { prefs.Paused = !prefs.Paused; prefs.Save(Root); ((System.Windows.Forms.ToolStripMenuItem)menu.Items[2]).Checked = prefs.Paused; });
+            menu.Items.Add(L.Text("Suche öffnen"), null, (_, _) => window.OpenMode(false));
+            menu.Items.Add(L.Text("Zwischenablageverlauf"), null, (_, _) => window.OpenMode(true));
+            menu.Items.Add(L.Text("Verlauf pausieren"), null, (_, _) => { prefs.Paused = !prefs.Paused; prefs.Save(Root); ((System.Windows.Forms.ToolStripMenuItem)menu.Items[2]).Checked = prefs.Paused; });
             menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
-            menu.Items.Add("Beenden", null, (_, _) => app.Shutdown());
+            menu.Items.Add(L.Text("Beenden"), null, (_, _) => app.Shutdown());
             tray.ContextMenuStrip = menu;
+            L.Changed += () => { menu.Items[0].Text = L.Text("Suche öffnen"); menu.Items[1].Text = L.Text("Zwischenablageverlauf"); menu.Items[2].Text = L.Text("Verlauf pausieren"); menu.Items[4].Text = L.Text("Beenden"); };
             tray.DoubleClick += (_, _) => window.OpenMode(false);
             _ = Task.Run(async () => { while (!stop.IsCancellationRequested) { try { using var pipe = new NamedPipeServerStream(PipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly); await pipe.WaitForConnectionAsync(stop.Token); using var reader = new StreamReader(pipe); string? command = await reader.ReadLineAsync(stop.Token); if (command is "history" or "search") await app.Dispatcher.InvokeAsync(() => window.OpenMode(command == "history")); else if (command == "quit" && !clipboard.IsBusy) await app.Dispatcher.InvokeAsync(() => app.Shutdown()); } catch (OperationCanceledException) { break; } catch (IOException) { await Task.Delay(500); } } });
         }
@@ -114,17 +116,17 @@ static class Program
                 string folder = args.SkipWhile(x => x != "--preview").Skip(1).FirstOrDefault() ?? Root;
                 Directory.CreateDirectory(folder);
                 store.Clear(true);
-                store.AddText("Eine Idee festhalten. Später genau hier wiederfinden.");
+                store.AddText("A note to keep for later.");
                 store.AddText("https://example.com/design");
                 string samples = Path.Combine(Path.GetTempPath(), "Kopra-preview-source-" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(samples);
                 try
                 {
-                    string documents = Path.Combine(samples, "Projektunterlagen");
+                    string documents = Path.Combine(samples, "Project notes");
                     Directory.CreateDirectory(documents);
-                    File.WriteAllText(Path.Combine(documents, "Notizen.txt"), "Eigene Vorschau-Testdatei");
+                    File.WriteAllText(Path.Combine(documents, "Notes.txt"), "Example project notes");
                     var saved = await store.AddFiles([documents], 1048576);
-                    store.RecordRecent(new("Notizen.txt", Path.Combine(saved.Files[0], "Notizen.txt"), "Datei", "Zuletzt geöffnet"));
+                    store.RecordRecent(new("Notes.txt", Path.Combine(saved.Files[0], "Notes.txt"), "Datei", L.Text("Zuletzt geöffnet")));
                     var visual = new DrawingVisual();
                     using (var draw = visual.RenderOpen())
                     {
@@ -136,7 +138,7 @@ static class Program
                     bitmap.Render(visual);
                     var encoder = new System.Windows.Media.Imaging.JpegBitmapEncoder();
                     encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-                    string image = Path.Combine(samples, "Bildvorschau.jpeg");
+                    string image = Path.Combine(samples, "Landscape.jpeg");
                     using (var output = File.Create(image))
                         encoder.Save(output);
                     await store.AddFiles([image], 1048576);
