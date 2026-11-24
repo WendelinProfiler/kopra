@@ -1,0 +1,22 @@
+name: Capture documentation screenshots
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mac:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Build native app
+        run: KOPRA_ARCH=arm64 zsh mac/Build.sh
+      - name: Capture app with example content
+        run: |
+          mkdir -p captures
+          mac/build/Kopra.app/Contents/MacOS/Kopra --render-preview "$PWD/captures"
+          sips -g pixelWidth -g pixelHeight captures/mac-history.png
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: mac-screenshots
+          path: captures/*.png
+          retention-days: 7

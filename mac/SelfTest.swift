@@ -40,14 +40,23 @@ import Vision
 }
 
 @MainActor func renderPreview(_ folder:String) throws {
-    _ = NSApplication.shared;NSApp.setActivationPolicy(.accessory)
+    _ = NSApplication.shared;NSApp.setActivationPolicy(.accessory);NSApp.appearance=NSAppearance(named:.darkAqua)
     let root=FileManager.default.temporaryDirectory.appendingPathComponent("Kopra-preview-"+uniqueID());let history=MacHistory(root:root);history.preferences.reserveMB=0;defer{try? FileManager.default.removeItem(at:root)}
-    _ = try history.insert(SharedClip(id:uniqueID(),kind:"text",title:"Eine Idee festhalten",text:"Eine Idee festhalten. Später genau hier wiederfinden.",created:milliseconds(),files:[]),origin:"Windows")
+    _ = try history.insert(SharedClip(id:uniqueID(),kind:"text",title:"Eine Idee festhalten",text:"Eine Idee festhalten. Später genau hier wiederfinden.",created:milliseconds()-3000,files:[]),origin:"Windows")
+    _ = try history.insert(SharedClip(id:uniqueID(),kind:"text",title:"https://example.com/design",text:"https://example.com/design",created:milliseconds()-2000,files:[]),origin:"")
+    _ = try history.insert(SharedClip(id:uniqueID(),kind:"files",title:"Projektunterlagen",text:"",created:milliseconds()-1000,files:[SharedFile(path:"Projektunterlagen",directory:true,data:""),SharedFile(path:"Projektunterlagen/Notizen.txt",directory:false,data:Data("Ideen für das nächste Projekt".utf8).base64EncodedString())]),origin:"")
+    let image=NSImage(size:NSSize(width:640,height:400));image.lockFocus();NSGradient(starting:NSColor(calibratedRed:0.27,green:0.68,blue:0.88,alpha:1),ending:NSColor(calibratedRed:0.35,green:0.31,blue:0.73,alpha:1))!.draw(in:NSRect(x:0,y:0,width:640,height:400),angle:45);NSColor(calibratedRed:0.93,green:0.79,blue:0.61,alpha:1).setFill();NSBezierPath(ovalIn:NSRect(x:420,y:250,width:90,height:90)).fill();let mountains=NSBezierPath();mountains.move(to:NSPoint(x:0,y:0));mountains.line(to:NSPoint(x:170,y:280));mountains.line(to:NSPoint(x:340,y:90));mountains.line(to:NSPoint(x:440,y:190));mountains.line(to:NSPoint(x:640,y:0));mountains.close();NSColor(calibratedRed:0.15,green:0.25,blue:0.45,alpha:1).setFill();mountains.fill();image.unlockFocus()
+    guard let tiff=image.tiffRepresentation,let bitmap=NSBitmapImageRep(data:tiff),let png=bitmap.representation(using:.png,properties:[:]) else{throw SharedError.invalid}
+    _ = try history.insert(SharedClip(id:uniqueID(),kind:"image",title:"Bildvorschau.png",text:"",created:milliseconds(),files:[SharedFile(path:"Bildvorschau.png",directory:false,data:png.base64EncodedString())]),origin:"")
     let model=AppModel(history:history,loadPairing:false);model.status="Mit Windows verbunden";model.historyMode=true;model.search()
-    let panel=NSWindow(contentRect:NSRect(x:-2000,y:-2000,width:740,height:590),styleMask:[.borderless],backing:.buffered,defer:false);let host=NSHostingView(rootView:LauncherView(model:model).preferredColorScheme(.dark));panel.contentView=host;panel.orderFrontRegardless();RunLoop.current.run(until:Date().addingTimeInterval(0.3));host.layoutSubtreeIfNeeded()
-    try FileManager.default.createDirectory(atPath:folder,withIntermediateDirectories:true);guard let bitmap=host.bitmapImageRepForCachingDisplay(in:host.bounds) else{throw SharedError.invalid};host.cacheDisplay(in:host.bounds,to:bitmap);guard let png=bitmap.representation(using:.png,properties:[:]) else{throw SharedError.invalid};try png.write(to:URL(fileURLWithPath:folder+"/mac-history.png"));panel.orderOut(nil);print("MAC_PREVIEW_READY")
+    let area=NSScreen.main?.visibleFrame ?? NSRect(x:0,y:0,width:1280,height:900)
+    let panel=NSWindow(contentRect:NSRect(x:area.midX-370,y:area.midY-295,width:740,height:590),styleMask:[.borderless],backing:.buffered,defer:false);panel.isOpaque=false;panel.backgroundColor = .clear
+    let material=NSVisualEffectView();material.material = .hudWindow;material.blendingMode = .behindWindow;material.state = .active;material.wantsLayer=true;material.layer?.cornerRadius=18;material.layer?.masksToBounds=true
+    let host=NSHostingView(rootView:LauncherView(model:model).preferredColorScheme(.dark).tint(.blue).accentColor(.blue));host.translatesAutoresizingMaskIntoConstraints=false;material.addSubview(host);NSLayoutConstraint.activate([host.leadingAnchor.constraint(equalTo:material.leadingAnchor),host.trailingAnchor.constraint(equalTo:material.trailingAnchor),host.topAnchor.constraint(equalTo:material.topAnchor),host.bottomAnchor.constraint(equalTo:material.bottomAnchor)]);panel.contentView=material;panel.orderFrontRegardless();RunLoop.current.run(until:Date().addingTimeInterval(0.8));host.layoutSubtreeIfNeeded()
+    try FileManager.default.createDirectory(atPath:folder,withIntermediateDirectories:true)
+    let output=folder+"/mac-history.png";let capture=Process();capture.executableURL=URL(fileURLWithPath:"/usr/sbin/screencapture");capture.arguments=["-x","-o","-l",String(panel.windowNumber),output];try capture.run();capture.waitUntilExit();panel.orderOut(nil)
+    guard capture.terminationStatus==0,FileManager.default.fileExists(atPath:output) else{throw SharedError.unavailable};print("MAC_PREVIEW_READY")
 }
-
 func lanSelfTest(_ pairFile:String) throws {
     let code=try String(contentsOfFile:pairFile,encoding:.utf8).trimmingCharacters(in:.whitespacesAndNewlines);guard code.hasPrefix("IS1."),let bytes=Data(base64Encoded:String(code.dropFirst(4))) else{throw SharedError.invalid};let pair=try JSONDecoder().decode(Pairing.self,from:bytes)
     let root=FileManager.default.temporaryDirectory.appendingPathComponent("Kopra-lan-test-"+uniqueID());let history=MacHistory(root:root);history.preferences.reserveMB=0;defer{try? FileManager.default.removeItem(at:root)}
