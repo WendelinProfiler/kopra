@@ -223,7 +223,7 @@ sealed partial class LauncherWindow : Window
         PreviewKeyDown += OnKey;
         InitializeFocusOwnership();
         clipboard.Changed += () => Dispatcher.InvokeAsync(async () => { if (history && IsVisible && !editing) await UpdateResults(); });
-        clipboard.Status += message => Dispatcher.InvokeAsync(() => { status.Text = message; if (message.Length > 0) footer.Text = message.Length > 54 ? message[..54] + "…" : message; else footer.Text = L.Text("Nur auf diesem Rechner"); });
+        clipboard.Status += message => Dispatcher.InvokeAsync(() => { status.Text = message; if (message.Length > 0) footer.Text = message.Length > 54 ? message[..54] + "…" : message; else footer.Text = DeviceSync?.HasPeer == true ? L.Text("Lokal gespeichert · Gerätefreigabe aktiv") : L.Text("Nur auf diesem Rechner"); });
     }
     static FontFamily ChooseFont() => new("Segoe UI Variable Text, Segoe UI");
     static void Add(Grid parent, UIElement element, int row)
@@ -270,7 +270,7 @@ sealed partial class LauncherWindow : Window
         input.Text = "";
         section.Text = history ? L.Text("ZWISCHENABLAGE · LOKAL GESICHERT") : L.Text("APPS, DATEIEN UND EINSTELLUNGEN");
         ToolTipService.SetIsEnabled(input, false);
-        footer.Text = L.Text("Nur auf diesem Rechner");
+        footer.Text = DeviceSync?.HasPeer == true ? L.Text("Lokal gespeichert · Gerätefreigabe aktiv") : L.Text("Nur auf diesem Rechner");
         FitToScreen();
         if (!IsVisible)
         {
