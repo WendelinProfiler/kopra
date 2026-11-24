@@ -28,6 +28,7 @@ jobs:
           path: |
             build/sync-fixture.json
             build/pair-v2-fixture.json
+            build/code-fixture.json
             build/qr-test.png
             build/qr-test.txt
             build/self-test-result.txt

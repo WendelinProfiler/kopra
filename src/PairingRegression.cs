@@ -102,6 +102,7 @@ static class PairingRegression
         File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "qr-test.txt"), qr);
         Check(Shortcuts.Valid(77, 3) && !Shortcuts.Valid(17, 0) && !Shortcuts.Valid(76, 8), "hotkey validation");
         Check(Shortcuts.Label(77, 3) == "Strg + Alt + M", "hotkey label");
+        count += CodeRegression.Run();
         return count;
     }
 }

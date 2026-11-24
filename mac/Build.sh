@@ -5,7 +5,7 @@ app=build/Kopra.app
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources" build/architectures
 if [[ -n "${KOPRA_ARCH:-}" ]]; then architectures=("$KOPRA_ARCH"); else architectures=(arm64 x86_64); fi
 for architecture in $architectures; do
-  xcrun swiftc -swift-version 5 -parse-as-library -O -target "$architecture-apple-macos13.0" *.swift \
+  xcrun swiftc -swift-version 5 -parse-as-library -O -target "$architecture-apple-macos13.0" *.swift vendor/BigInt/*.swift \
     -o "build/architectures/Kopra-$architecture" \
     -framework AppKit -framework SwiftUI -framework Carbon -framework Security \
     -framework CryptoKit -framework ServiceManagement -framework AVFoundation \
@@ -16,6 +16,7 @@ if [[ ${#architectures} -eq 1 ]]; then
 else
   xcrun lipo -create build/architectures/Kopra-arm64 build/architectures/Kopra-x86_64 -output "$app/Contents/MacOS/Kopra"
 fi
+cp vendor/BigInt/LICENSE.md "$app/Contents/Resources/BigInt-LICENSE.md"
 cp Info.plist "$app/Contents/Info.plist"
 icon=../assets/icon-1024.png
 if [[ ! -f "$icon" ]]; then icon=icon-1024.png; fi

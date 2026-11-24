@@ -5,19 +5,25 @@ import ApplicationServices
 struct DevicePairingView:View {
     @ObservedObject var model:AppModel
     @State var cameraError=""
+    @State var numericCode=""
     var body:some View {
         Section("Gemeinsame Zwischenablage"){
             Label(model.paired ? "Mit Windows gekoppelt":"Noch kein Gerät gekoppelt",systemImage:model.paired ? "checkmark.shield":"laptopcomputer")
             Text("Du kannst Kopra auf diesem Mac allein nutzen. Verbinde einen Windows-Rechner, wenn du neue Kopien teilen möchtest.").font(.caption).foregroundStyle(.secondary)
             if !model.paired {
                 if !model.pairingInProgress{
+                    HStack {
+                        TextField("6-stelligen Code eingeben",text:$numericCode).textFieldStyle(.roundedBorder).font(.system(size:20,design:.monospaced)).frame(width:240).onSubmit{if numericCode.count==6{model.joinCode(numericCode)}}.onChange(of:numericCode){text in numericCode=String(text.filter{$0.isASCII && $0.isNumber}.prefix(6))}
+                        Button("Verbinden"){model.joinCode(numericCode)}.buttonStyle(.borderedProminent).disabled(numericCode.count != 6)
+                    }
+                    Text("Zeige den Code unter Windows in Kopra → Einstellungen → Geräte → Mac verbinden an.").font(.caption).foregroundStyle(.secondary)
                     Button("QR-Code scannen"){cameraError="";model.showQrCamera=true}
                     Button("QR-Bild öffnen …"){model.scanQrImage()}
                     DisclosureGroup("Kopplungslink einfügen"){
                         SecureField("Link von Windows",text:$model.pairingText)
                         Button("Verbinden"){model.joinQr(model.pairingText);model.pairingText=""}
                     }
-                    Text("Zeige den QR-Code unter Windows in Kopra → Einstellungen → Geräte an. Beide Geräte müssen im selben Netzwerk sein.").font(.caption).foregroundStyle(.secondary)
+                    Text("Beide Geräte müssen im selben lokalen Netzwerk sein. QR-Code und Kopplungslink sind zusätzliche Optionen.").font(.caption).foregroundStyle(.secondary)
                 }
                 if !model.pairingDigits.isEmpty{Text(model.pairingDigits).font(.system(size:34,weight:.medium,design:.monospaced)).frame(maxWidth:.infinity).padding(.vertical,10)}
                 if !model.pairingStatus.isEmpty{Text(model.pairingStatus).font(.caption).foregroundStyle(.secondary)}

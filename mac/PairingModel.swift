@@ -2,6 +2,10 @@ import Foundation
 import AppKit
 
 extension AppModel {
+    func joinCode(_ code:String){
+        guard !paired else{return};cancelQr();pairingInProgress=true;pairingStatus="Windows wird im lokalen Netzwerk gesucht …";let device=history.preferences.device
+        pairingTask=Task{do{let link=try await Task.detached{try CodePairing.resolve(code,device:device)}.value;guard !Task.isCancelled else{return};self.joinQr(link)}catch{guard !Task.isCancelled else{return};self.pairingInProgress=false;self.pairingStatus="Code nicht gefunden oder abgelaufen. Öffne unter Windows einen neuen Code und prüfe, ob beide Geräte im selben Netzwerk sind."}}
+    }
     func scanQrImage(){do{if let code=try qrFromImage(){joinQr(code)}}catch{pairingStatus="Kein gültiger Kopra-Code im Bild gefunden."}}
     func joinQr(_ code:String){
         guard !paired else{pairingStatus="Bitte zuerst die bestehende Verbindung aufheben.";return}

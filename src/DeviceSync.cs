@@ -79,7 +79,10 @@ static class SyncWire
                 throw new IOException("Eintrag ist größer als 32 MB");
             if (!f.Directory)
             {
-                try { _ = Convert.FromBase64String(f.Data); }
+                try
+                {
+                    _ = Convert.FromBase64String(f.Data);
+                }
                 catch (FormatException) { throw new IOException("Ungültiger Dateiinhalt"); }
             }
         }
@@ -111,12 +114,12 @@ static class SyncWire
                 throw new IOException("Eintrag zu groß");
             files.Add(new(relative, dir, Convert.ToBase64String(bytes)));
             if (dir)
-            foreach (var child in Directory.EnumerateFileSystemEntries(path))
-                Add(child, relative + "/" + Path.GetFileName(child));
+                foreach (var child in Directory.EnumerateFileSystemEntries(path))
+                    Add(child, relative + "/" + Path.GetFileName(child));
         }
         if (item.Kind != "text")
-        foreach (var file in item.Files)
-            Add(file, Path.GetFileName(Path.TrimEndingDirectorySeparator(file)));
+            foreach (var file in item.Files)
+                Add(file, Path.GetFileName(Path.TrimEndingDirectorySeparator(file)));
         var clip = new SharedClip(EntryId(item), item.Kind, item.Title, item.Text, new DateTimeOffset(item.Created).ToUnixTimeMilliseconds(), files);
         Check(clip);
         return clip;
@@ -242,7 +245,7 @@ sealed class DeviceSync : IDisposable
     }
     void StartDiscovery()
     {
-        if (key == null || discovery != null)
+        if (discovery != null)
             return;
         try
         {
@@ -292,6 +295,22 @@ sealed class DeviceSync : IDisposable
             try
             {
                 var datagram = await socket.ReceiveAsync(stop.Token);
+                if (datagram.Buffer.Length <= 256 && datagram.Buffer.Length > 0 && datagram.Buffer[0] == '{')
+                {
+                    using var query = JsonDocument.Parse(datagram.Buffer);
+                    if (query.RootElement.GetProperty("kind").GetString() == "code-locate" &&
+                        Guid.TryParseExact(query.RootElement.GetProperty("id").GetString(), "N", out _) && Pairing.DiscoverySession is string active)
+                    {
+                        var offer = JsonSerializer.SerializeToUtf8Bytes(new
+                        {
+                            kind = "code-offer",
+                            id = query.RootElement.GetProperty("id").GetString(),
+                            session = active
+                        }, SyncWire.Json);
+                        await socket.SendAsync(offer, datagram.RemoteEndPoint, stop.Token);
+                    }
+                    continue;
+                }
                 byte[] secret;
                 lock (gate)
                 {

@@ -40,11 +40,29 @@ sealed class PairingServer : IDisposable
 {
     readonly object gate = new(); readonly string device; readonly Action<byte[], string> complete; ECDiffieHellman? ephemeral; byte[] token = [], handshake = [], sync = []; string session = "", peer = "", peerPublic = "", code = ""; long expires, receiptUntil; bool hostApproved, peerApproved, completed, rejected;
     readonly Func<long> now;
+    readonly CodePairing numeric;
+    public string EntryCode
+    {
+        get
+        {
+            lock (gate)
+                return numeric.Display;
+        }
+    }
+    public string? DiscoverySession
+    {
+        get
+        {
+            lock (gate)
+                return !rejected && !completed && peer.Length == 0 && numeric.Available ? numeric.Session : null;
+        }
+    }
     public PairingServer(string device, Action<byte[], string> complete, Func<long>? now = null)
     {
         this.device = device;
         this.complete = complete;
         this.now = now ?? (() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        numeric = new CodePairing(this.now);
     }
     public PairingSnapshot Snapshot
     {
@@ -66,7 +84,9 @@ sealed class PairingServer : IDisposable
             token = RandomNumberGenerator.GetBytes(32);
             session = Guid.NewGuid().ToString("N");
             expires = now() + 300000;
-            return "kopra://pair?v=2&host=" + Uri.EscapeDataString(host) + "&port=" + SyncWire.Port + "&device=" + device + "&session=" + session + "&pub=" + PairingCrypto.Base64(PairingCrypto.Public(ephemeral)) + "&token=" + PairingCrypto.Base64(token) + "&expires=" + expires;
+            var link = "kopra://pair?v=2&host=" + Uri.EscapeDataString(host) + "&port=" + SyncWire.Port + "&device=" + device + "&session=" + session + "&pub=" + PairingCrypto.Base64(PairingCrypto.Public(ephemeral)) + "&token=" + PairingCrypto.Base64(token) + "&expires=" + expires;
+            numeric.Begin(session, link, expires);
+            return link;
         }
     }
     public void Approve()
@@ -84,6 +104,7 @@ sealed class PairingServer : IDisposable
             if (!completed)
             {
                 rejected = true;
+                numeric.Dispose();
                 CryptographicOperations.ZeroMemory(sync);
             }
         }
@@ -110,7 +131,7 @@ sealed class PairingServer : IDisposable
             if (!json.TryGetProperty("kind", out var kindValue))
                 return false;
             string? kind = kindValue.GetString();
-            if (kind is not ("pair-request" or "pair-exchange"))
+            if (kind is not ("pair-request" or "pair-exchange" or "code-start" or "code-finish"))
                 return false;
             lock (gate)
             {
@@ -118,6 +139,11 @@ sealed class PairingServer : IDisposable
                 {
                     if (ephemeral == null || !json.TryGetProperty("session", out var sid) || sid.GetString() != session || rejected || (!completed && expires <= now()) || (completed && receiptUntil <= now()))
                         throw new IOException();
+                    if (kind is "code-start" or "code-finish")
+                    {
+                        response = numeric.Handle(json);
+                        return true;
+                    }
                     if (kind == "pair-request")
                     {
                         string candidate = json.GetProperty("device").GetString() ?? "", pub = json.GetProperty("pub").GetString() ?? "";
@@ -151,7 +177,10 @@ sealed class PairingServer : IDisposable
                         if (action == "approve")
                             peerApproved = true;
                         else if (action == "reject")
+                        {
                             rejected = true;
+                            numeric.Dispose();
+                        }
                         else if (action != "poll")
                             throw new IOException();
                     }
@@ -184,6 +213,7 @@ sealed class PairingServer : IDisposable
     }
     void Clear()
     {
+        numeric.Dispose();
         ephemeral?.Dispose();
         ephemeral = null;
         foreach (var secret in new[] { token, handshake, sync })

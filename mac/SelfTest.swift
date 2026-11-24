@@ -63,6 +63,13 @@ func selfTest(_ fixture: String) throws {
     try VNImageRequestHandler(url:fixtureFolder.appendingPathComponent("qr-test.png"),options:[:]).perform([qrRequest])
     let qrExpected=try String(contentsOf:fixtureFolder.appendingPathComponent("qr-test.txt"),encoding:.utf8)
     try check(qrRequest.results?.first?.payloadStringValue==qrExpected)
+    let numeric=try JSONSerialization.jsonObject(with:Data(contentsOf:fixtureFolder.appendingPathComponent("code-fixture.json"))) as! [String:String]
+    let numericSalt=Data(base64Encoded:numeric["salt"]!)!,numericA=BigUInt(Data(base64Encoded:numeric["a"]!)!),numericB=BigUInt(Data(base64Encoded:numeric["b"]!)!)
+    let (numericKey,numericContext)=try CodeCrypto.secret(code:numeric["code"]!,salt:numericSalt,a:numericA,b:numericB,session:numeric["session"]!,device:numeric["device"]!)
+    try check(numericKey.base64EncodedString()==numeric["key"]);try check(numericContext.base64EncodedString()==numeric["context"]);try check(CodeCrypto.proof(numericKey,numericContext,"client").base64EncodedString()==numeric["proof"])
+    let wrongCode=numeric["code"]=="000000" ? "999999":"000000"
+    let (wrongKey,_)=try CodeCrypto.secret(code:wrongCode,salt:numericSalt,a:numericA,b:numericB,session:numeric["session"]!,device:numeric["device"]!)
+    try check(wrongKey != numericKey)
     let pairFile=URL(fileURLWithPath:fixture).deletingLastPathComponent().appendingPathComponent("pair-v2-fixture.json")
     let pair=try JSONSerialization.jsonObject(with:Data(contentsOf:pairFile)) as! [String:String]
     let privateKey=try P256.KeyAgreement.PrivateKey(rawRepresentation:Data(base64Encoded:pair["privateKey"]!)!);let peer=try P256.KeyAgreement.PublicKey(x963Representation:Data(base64Encoded:pair["peerPublic"]!)!);let secret=try privateKey.sharedSecretFromKeyAgreement(with:peer);let token=Data(base64Encoded:pair["token"]!)!;let derived=PairV2.derive(secret,token:token,session:pair["session"]!)

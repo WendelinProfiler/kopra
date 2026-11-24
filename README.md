@@ -14,11 +14,11 @@ The current interface is in German. Windows 11 and macOS 13 or later are support
 
 ## Pairing a Mac and Windows PC
 
-1. On Windows, open Settings → Devices and show the QR code.
-2. On Mac, open Settings → Devices and scan it with the camera. You can also open a saved QR image.
-3. Compare the six-digit code on both screens. Confirm on both devices.
+1. On Windows, open Settings → Devices → Connect Mac. Kopra shows a six-digit code.
+2. On Mac, open Settings → Devices, enter that code and choose Connect.
+3. Kopra finds the Windows PC on your local network. Compare the new confirmation code on both screens and confirm on both.
 
-The QR code expires after five minutes and can authorize one pairing. It contains a temporary token and public key, never the permanent clipboard key.
+The entry code expires after five minutes and can be used once. After five attempts, start a new pairing on Windows. The code is not broadcast on the network. QR scanning and QR-image import remain available as alternatives.
 
 Both computers must be on the same local network. Kopra does not use a cloud service or a login account. SSH is not part of the connection.
 
