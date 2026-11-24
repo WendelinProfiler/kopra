@@ -7,6 +7,7 @@ struct SearchResult: Identifiable { var id: String; var title: String; var subti
     let history: MacHistory
     @Published var query = "" { didSet { search() } }; @Published var historyMode = false; @Published var settings = false; @Published var rows=[SearchResult](); @Published var selected=0; @Published var status="Nur auf diesem Mac"; @Published var revision=0; @Published var pairingText=""; @Published var paired=false
     @Published var settingsTab=0;@Published var showQrCamera=false;@Published var pairingStatus="";@Published var pairingDigits="";@Published var pairingCanConfirm=false;@Published var pairingInProgress=false;var pendingPair:PairClient?;var pairingTask:Task<Void,Never>?;var pairingApproved=false
+    @Published var pairingViaCode=false;@Published var pairingOtherConfirmed=false
     var shortcutService:MacShortcuts?;@Published var recordingShortcut=false
     var panel: NSPanel?; var previousApp: NSRunningApplication?; private var pasteboardCount=NSPasteboard.general.changeCount; private var ignoredCount = -1; private var syncing=false; private var capturing=false; private var timer:Timer?; private var syncTimer:Timer?;private var pruneTimer:Timer?; private var lastPrune=Date();private var lastDiscovery=Date.distantPast;private var lastToggle=Date.distantPast; private var searchGeneration=0
     private var applications=[URL](); private var recent=[URL](); private var skipped=Set<String>()

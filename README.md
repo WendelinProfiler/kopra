@@ -16,7 +16,7 @@ The current interface is in German. Windows 11 and macOS 13 or later are support
 
 1. On Windows, open Settings → Devices → Connect Mac. Kopra shows a six-digit code.
 2. On Mac, open Settings → Devices, enter that code and choose Connect.
-3. Kopra finds the Windows PC on your local network. Compare the new confirmation code on both screens and confirm on both.
+3. Kopra finds the Windows PC on your local network. Approve the connection on both computers. There is no second code to enter or compare.
 
 The entry code expires after five minutes and can be used once. After five attempts, start a new pairing on Windows. The code is not broadcast on the network. QR scanning and QR-image import remain available as alternatives.
 

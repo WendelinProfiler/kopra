@@ -20,6 +20,7 @@ static class CodeRegression
         var device = Guid.NewGuid().ToString("N");
         server.Begin(session, "synthetic-link", now + 300000);
         Check(server.Display.Length == 6 && server.Available);
+        Check(!server.Authenticated);
         byte[] Send(object value)
         {
             using var request = JsonDocument.Parse(JsonSerializer.SerializeToUtf8Bytes(value));
@@ -75,6 +76,7 @@ static class CodeRegression
             proof = PairingCrypto.Base64(CodeCrypto.Proof(key, context, "client"))
         }));
         Check(ready.RootElement.GetProperty("kind").GetString() == "code-ready" && !server.Available);
+        Check(server.Authenticated);
         Check(System.Text.Encoding.UTF8.GetString(SyncWire.Open(PairingCrypto.Decode(ready.RootElement.GetProperty("cipher").GetString()!), key)) == "synthetic-link");
         Check(CryptographicOperations.FixedTimeEquals(PairingCrypto.Decode(ready.RootElement.GetProperty("proof").GetString()!), CodeCrypto.Proof(key, context, "server")));
         Check(Reject(() => Send(new { kind = "code-finish", session, attempt, proof = PairingCrypto.Base64(CodeCrypto.Proof(key, context, "client")) })));

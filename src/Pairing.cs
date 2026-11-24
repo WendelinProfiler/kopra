@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 namespace Kopra;
 
-sealed record PairingSnapshot(string Status, string Code, long Expires, string Device = "", bool HostApproved = false);
+sealed record PairingSnapshot(string Status, string Code, long Expires, string Device = "", bool HostApproved = false, bool Numeric = false, bool PeerApproved = false);
 static class PairingCrypto
 {
     public static string Base64(byte[] value) => Convert.ToBase64String(value).TrimEnd('=').Replace('+', '-').Replace('/', '_');
@@ -71,7 +71,7 @@ sealed class PairingServer : IDisposable
             lock (gate)
             {
                 string status = completed ? "complete" : rejected ? "rejected" : expires <= now() ? "expired" : peer.Length == 0 ? "scanning" : "confirmation";
-                return new(status, code, expires, peer.Length > 0 ? "Mac" : "", hostApproved);
+                return new(status, code, expires, peer.Length > 0 ? "Mac" : "", hostApproved, numeric.Authenticated, peerApproved);
             }
         }
     }

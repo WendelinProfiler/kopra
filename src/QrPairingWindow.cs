@@ -17,8 +17,10 @@ sealed partial class LauncherWindow
         }
         catch (IOException error) { footer.Text = error.Message; return; }
         var panel = new StackPanel { Margin = new Thickness(22) };
-        panel.Children.Add(new TextBlock { Text = "Mac verbinden", FontSize = 21, FontWeight = FontWeights.SemiBold });
-        panel.Children.Add(new TextBlock { Text = "Öffne Kopra auf dem Mac → Einstellungen → Geräte. Gib dort diesen Code ein und bestätige anschließend auf beiden Geräten.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = Ink(180), Margin = new Thickness(0, 10, 0, 14) });
+        var heading = new TextBlock { Text = "Mac verbinden", FontSize = 21, FontWeight = FontWeights.SemiBold };
+        panel.Children.Add(heading);
+        var instructions = new TextBlock { Text = "Gib diesen Code auf deinem Mac in Kopra → Einstellungen → Geräte ein.", TextWrapping = TextWrapping.Wrap, FontSize = 12, Foreground = Ink(180), Margin = new Thickness(0, 10, 0, 14) };
+        panel.Children.Add(instructions);
         var entryCode = new TextBlock { Text = DeviceSync.Pairing.EntryCode, FontSize = 38, FontWeight = FontWeights.Medium, TextAlignment = TextAlignment.Center, Margin = new Thickness(0, 4, 0, 12) };
         panel.Children.Add(entryCode);
         using var generator = new QRCodeGenerator();
@@ -47,14 +49,59 @@ sealed partial class LauncherWindow
         var save = MakeButton("QR-Code als Bild speichern …", () => { var picker = new Microsoft.Win32.SaveFileDialog { Filter = "PNG-Bild|*.png", FileName = "Kopra-Kopplung.png" }; if (picker.ShowDialog(this) == true) { var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(image)); using var output = File.Create(picker.FileName); encoder.Save(output); } });
         save.FontSize = 11;
         save.Background = Brushes.Transparent;
+        save.Visibility = Visibility.Collapsed;
+        extra.Expanded += (_, _) => save.Visibility = Visibility.Visible;
+        extra.Collapsed += (_, _) => save.Visibility = Visibility.Collapsed;
         panel.Children.Add(save);
-        panel.Children.Add(MakeButton("Schließen", () => DismissConfirmation()));
+        var retry = MakeButton("Neuen Code anzeigen", ShowPairing);
+        retry.Visibility = Visibility.Collapsed; panel.Children.Add(retry);
+        var close = MakeButton("Abbrechen", () => { DismissConfirmation(); ShowSettings(); });
+        panel.Children.Add(close);
         confirmation = new Border { Background = new SolidColorBrush(Color.FromArgb(165, 0, 0, 0)), CornerRadius = new CornerRadius(15), Child = new Border { Width = 410, MaxHeight = Math.Max(350, Height - 30), HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, CornerRadius = new CornerRadius(15), Background = Ink(44), Child = new ScrollViewer { Content = panel, VerticalScrollBarVisibility = ScrollBarVisibility.Auto } } };
         Grid.SetRowSpan(confirmation, 5);
         Panel.SetZIndex(confirmation, 10);
         content.Children.Add(confirmation);
         pairingTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(400) };
-        pairingTimer.Tick += (_, _) => { var snapshot = DeviceSync.Pairing.Snapshot; long seconds = Math.Max(0, (snapshot.Expires - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) / 1000); switch (snapshot.Status) { case "scanning": state.Text = $"Wartet auf deinen Mac · {seconds / 60}:{seconds % 60:D2} Minuten"; break; case "confirmation": entryCode.Visibility = Visibility.Collapsed; extra.Visibility = Visibility.Collapsed; surface.Visibility = Visibility.Collapsed; save.Visibility = Visibility.Collapsed; digits.Text = snapshot.Code; digits.Visibility = Visibility.Visible; approve.Visibility = Visibility.Visible; approve.IsEnabled = !snapshot.HostApproved; state.Text = snapshot.HostApproved ? "Am Mac ebenfalls bestätigen." : "Zeigen beide Geräte denselben Zahlencode?"; break; case "complete": entryCode.Visibility = Visibility.Collapsed; extra.Visibility = Visibility.Collapsed; surface.Visibility = Visibility.Collapsed; digits.Visibility = Visibility.Collapsed; save.Visibility = Visibility.Collapsed; approve.Visibility = Visibility.Collapsed; state.Text = "Mac verbunden. Neue Kopien werden jetzt geteilt."; break; case "expired": case "rejected": entryCode.Visibility = Visibility.Collapsed; extra.Visibility = Visibility.Collapsed; surface.Visibility = Visibility.Collapsed; digits.Visibility = Visibility.Collapsed; approve.Visibility = Visibility.Collapsed; save.Visibility = Visibility.Collapsed; state.Text = snapshot.Status == "expired" ? "Der Code ist abgelaufen. Schließe das Fenster und starte eine neue Kopplung." : "Die Kopplung wurde abgebrochen."; DeviceSync.CancelPairing(); break; } };
+        pairingTimer.Tick += (_, _) =>
+        {
+            var snapshot = DeviceSync.Pairing.Snapshot;
+            long seconds = Math.Max(0, (snapshot.Expires - DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()) / 1000);
+            switch (snapshot.Status)
+            {
+                case "scanning":
+                    state.Text = $"Gültig für {seconds / 60}:{seconds % 60:D2} · Beide Geräte im selben Netzwerk";
+                    break;
+                case "confirmation":
+                    entryCode.Visibility = extra.Visibility = save.Visibility = Visibility.Collapsed;
+                    heading.Text = "Mac gefunden";
+                    instructions.Text = snapshot.Numeric ? "Erlaube die Verbindung, damit beide Geräte neue Kopien teilen können." : "Vergleiche diesen Bestätigungscode mit dem Mac.";
+                    digits.Text = snapshot.Code;
+                    digits.Visibility = snapshot.Numeric ? Visibility.Collapsed : Visibility.Visible;
+                    approve.Visibility = Visibility.Visible;
+                    approve.Content = snapshot.HostApproved ? "Auf diesem PC bestätigt" : snapshot.Numeric ? "Mit Mac verbinden" : "Codes stimmen überein";
+                    approve.IsEnabled = !snapshot.HostApproved;
+                    state.Text = snapshot.HostApproved ? "Bitte jetzt am Mac bestätigen." : snapshot.PeerApproved ? "Am Mac bestätigt. Bestätige jetzt auf diesem PC." : "Bestätige die Verbindung auf diesem PC und am Mac.";
+                    break;
+                case "complete":
+                    entryCode.Visibility = extra.Visibility = digits.Visibility = save.Visibility = approve.Visibility = Visibility.Collapsed;
+                    heading.Text = "Mit Mac verbunden";
+                    instructions.Text = "Neue Texte, Bilder, Dateien und Ordner erscheinen jetzt auf beiden Geräten.";
+                    state.Text = "Die Verbindung bleibt gespeichert. Beim nächsten Start musst du nicht erneut koppeln.";
+                    close.Content = "Fertig";
+                    break;
+                case "expired":
+                case "rejected":
+                    entryCode.Visibility = extra.Visibility = digits.Visibility = approve.Visibility = save.Visibility = Visibility.Collapsed;
+                    heading.Text = snapshot.Status == "expired" ? "Code abgelaufen" : "Verbindung abgebrochen";
+                    instructions.Text = "Dein Verlauf bleibt erhalten. Du kannst einen neuen Versuch starten.";
+                    state.Text = "Erzeuge hier einen neuen Code und gib ihn am Mac ein.";
+                    retry.Visibility = Visibility.Visible;
+                    close.Content = "Schließen";
+                    DeviceSync.CancelPairing();
+                    pairingTimer?.Stop();
+                    break;
+            }
+        };
         pairingTimer.Start();
     }
     void StopPairingUi()

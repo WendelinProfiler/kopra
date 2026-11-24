@@ -1,6 +1,6 @@
 # Security
 
-Pair devices you own and trust. Entry codes and QR codes are temporary, and both devices must confirm the same six-digit code before Kopra stores a connection key.
+Pair devices you own and trust. Entry codes and QR codes are temporary. Numeric pairing requires the entry code and approval on both devices before Kopra stores a connection key. The QR alternative also shows a comparison code.
 
 Numeric entry first uses SRP-6a with the fixed 2048-bit group from [RFC 5054](https://www.rfc-editor.org/rfc/rfc5054), SHA-256, a fresh salt, transcript-bound HKDF keys and mutual HMAC key confirmation. This authenticates the temporary pairing link without transmitting the code. Five attempts are allowed per five-minute session, across all clients. It is a Kopra protocol profile, not the RFC TLS handshake.
 

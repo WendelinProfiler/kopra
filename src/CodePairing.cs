@@ -39,6 +39,7 @@ sealed class CodePairing : IDisposable
     readonly Func<long> now;
     string code = "", session = "", link = ""; long expires; int tries; bool redeemed;
     public string Display => code;
+    public bool Authenticated => redeemed && code.Length > 0;
     public bool Available => code.Length > 0 && now() < expires && tries < 5 && !redeemed;
     public string Session => session;
     public CodePairing(Func<long> now)
