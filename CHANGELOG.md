@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 beta 5
 
 - Resolve Windows search results from their actual file URLs instead of translated display paths.
 - Preserve Mac search filenames containing line breaks and skip stale entries before limiting results.

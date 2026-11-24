@@ -1,5 +1,5 @@
 #define AppName "Kopra"
-#define AppVersion "1.0.0-beta.4"
+#define AppVersion "1.0.0-beta.5"
 [Setup]
 AppId={{92C12683-CECF-4BF7-8EED-540EB7A76EE5}
 AppName={#AppName}
