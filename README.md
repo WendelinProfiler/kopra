@@ -19,9 +19,9 @@ Clipboard history with example content.
 <img src="docs/screenshots/mac-history.png" alt="Kopra on macOS, showing clipboard history and an image preview" width="740">
 ## Downloads
 
-[Windows installer](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.4/Kopra-Setup-Windows-x64-preview.exe) · [Windows portable ZIP](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.4/Kopra-Windows-x64-preview.zip) · [Mac universal ZIP](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.4/Kopra-macOS-universal-preview.zip)
+[Windows installer](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.5/Kopra-Setup-Windows-x64-preview.exe) · [Windows portable ZIP](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.5/Kopra-Windows-x64-preview.zip) · [Mac universal ZIP](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.5/Kopra-macOS-universal-preview.zip)
 
-These are beta previews. Windows is unsigned and the Mac app is not notarized. SHA-256 checksums are included on the [release page](https://github.com/WendelinProfiler/kopra/releases/tag/v1.0.0-beta.4).
+These are beta previews. Windows is unsigned and the Mac app is not notarized. SHA-256 checksums are included on the [release page](https://github.com/WendelinProfiler/kopra/releases/tag/v1.0.0-beta.5).
 
 On Windows, run the installer or extract the portable ZIP. On Mac, extract the ZIP and move Kopra.app into Applications. Kopra runs from the Windows tray or Mac menu bar; click its icon to open search or settings. Starting automatically after login is optional.
 
