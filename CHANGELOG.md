@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 beta 4
+
+- Choose English or German in Settings. New installs use English.
+- Language changes apply immediately and stay on each device.
+- Fix the clipped search icon and hint when search returns no results.
+- Add native Windows and Mac screenshots with example content.
+
 ## 1.0.0 beta 3
 
 - Keep keyboard focus while the app is visible on Windows and Mac.

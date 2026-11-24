@@ -148,6 +148,7 @@ static class Program
                 await window.RenderPreview(Path.Combine(folder, "kopra-history.png"), true);
                 await window.RenderPreview(Path.Combine(folder, "kopra-history-text.png"), true, 3);
                 await window.RenderPreview(Path.Combine(folder, "kopra-history-folder.png"), true, 1);
+                await window.RenderPreview(Path.Combine(folder, "kopra-empty.png"), false, 0, true);
                 await window.RenderSettingsPreview(Path.Combine(folder, "kopra-general.png"), 0);
                 await window.RenderSettingsPreview(Path.Combine(folder, "kopra-storage.png"), 1);
                 await window.RenderSettingsPreview(Path.Combine(folder, "kopra-privacy.png"), 2);

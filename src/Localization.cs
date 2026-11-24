@@ -8,6 +8,7 @@ static class L
     static readonly Dictionary<string, string> german = Load("de");
     static string language = "en";
     public static string Language => language;
+    public static CultureInfo Culture => CultureInfo.GetCultureInfo(language == "de" ? "de-DE" : "en-US");
     public static event Action? Changed;
     static Dictionary<string, string> Load(string locale) => JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "assets", "localization." + locale + ".json")))!;
     public static void Use(string locale)
@@ -27,5 +28,5 @@ static class L
         var original = english.FirstOrDefault(x => x.Value == source).Key;
         return original == null ? source : german.GetValueOrDefault(original, original);
     }
-    public static string Format(string source, params object?[] values) => string.Format(CultureInfo.CurrentCulture, Text(source), values);
+    public static string Format(string source, params object?[] values) => string.Format(Culture, Text(source), values);
 }

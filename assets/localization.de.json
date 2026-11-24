@@ -2,5 +2,8 @@
   "Verbindung unterbrochen – versucht es erneut": "Verbindung unterbrochen. Erneuter Versuch …",
   "Übertragung wartet – Verbindung oder Speicher prüfen": "Übertragung wartet. Prüfe Verbindung und Speicher.",
   "Deine Suche. Deine Zwischenablage. Lokal auf deinem Rechner.": "Suche und Zwischenablageverlauf auf deinem Rechner.",
-  "Angeheftete Einträge bleiben erhalten – unabhängig von diesen Einstellungen.": "Angeheftete Einträge bleiben erhalten, bis du sie löschst."
+  "Angeheftete Einträge bleiben erhalten – unabhängig von diesen Einstellungen.": "Angeheftete Einträge bleiben erhalten, bis du sie löschst.",
+  "Diese Grenzen sind bereits sinnvoll voreingestellt. Werden sie erreicht, pausiert die Sicherung neuer Inhalte.": "Kopra pausiert neue Sicherungen, sobald eine dieser Grenzen erreicht ist.",
+  "Ältere Texte werden automatisch entfernt.": "Kopra entfernt ältere Texte automatisch.",
+  "Windows verbunden": "Windows-PC"
 }

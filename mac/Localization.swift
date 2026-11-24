@@ -13,6 +13,7 @@ enum L {
         if let original=english.first(where:{$0.value==source})?.key{return german[original] ?? original}
         return source
     }
+    static func bytes(_ count:Int64)->String{var size=Double(count);let units=["B","KB","MB","GB","TB"];var unit=0;while size>=1024 && unit<units.count-1{size/=1024;unit+=1};let format=NumberFormatter();format.locale=Locale(identifier:language);format.numberStyle = .decimal;format.maximumFractionDigits=unit==0 ? 0:1;return (format.string(from:NSNumber(value:size)) ?? String(count))+" "+units[unit]}
     static func shortcut(_ value:String)->String{language=="de" ? value.replacingOccurrences(of:"Space",with:"Leertaste"):value.replacingOccurrences(of:"Leertaste",with:"Space")}
     static func format(_ source:String,_ values:Any...)->String{
         var result=text(source);let pattern=try! NSRegularExpression(pattern:"\\{([0-9]+)(?::([^}]+))?\\}")

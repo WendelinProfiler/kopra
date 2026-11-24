@@ -59,11 +59,11 @@ public sealed record ClipEntry(string Id, string Kind, string Title, string Text
         get
         {
             string kind = Kind == "text" ? L.Text("Text") : Kind == "image" ? L.Text("Bild") : Files.Length == 1 ? L.Text(Directory.Exists(Files[0]) ? "Ordner" : new[] { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".heic" }.Contains(Path.GetExtension(Files[0]), StringComparer.OrdinalIgnoreCase) ? "Bilddatei" : "Datei") : L.Format("{0} Objekte", Files.Length);
-            return (Pinned ? L.Text("Angeheftet") + " · " : "") + kind + " · " + FormatBytes(Bytes) + " · " + Created.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentCulture);
+            return (Pinned ? L.Text("Angeheftet") + " · " : "") + kind + " · " + FormatBytes(Bytes) + " · " + Created.ToLocalTime().ToString("g", L.Culture);
         }
     }
     public string Glyph => Kind == "text" ? "≡" : Kind == "image" ? "▧" : "▱";
-    public static string FormatBytes(long value) => value >= 1073741824 ? $"{value / 1073741824d:0.#} GB" : value >= 1048576 ? $"{value / 1048576d:0.#} MB" : value >= 1024 ? $"{value / 1024d:0.#} KB" : $"{value} B";
+    public static string FormatBytes(long value) => value >= 1073741824 ? (value / 1073741824d).ToString("0.#", L.Culture) + " GB" : value >= 1048576 ? (value / 1048576d).ToString("0.#", L.Culture) + " MB" : value >= 1024 ? (value / 1024d).ToString("0.#", L.Culture) + " KB" : value.ToString(L.Culture) + " B";
 }
 public sealed record SearchItem(string Title, string Path, string Kind, string Detail, int Uses = 0, string Keywords = "")
 {

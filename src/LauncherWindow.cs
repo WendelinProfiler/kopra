@@ -314,7 +314,7 @@ sealed partial class LauncherWindow : Window
                 rows = (await Task.WhenAll(clips.Select(async x => { var picture = Thumbnail(x); if (picture == null && x.Files.Length > 0 && IsPicture(x.Files[0])) picture = await Icons.PreviewAsync(x.Files[0]); ImageSource? icon = picture ?? (x.Kind == "files" && x.Files.Length > 0 ? await Icons.ForAsync(new(x.Title, x.Files[0], "Datei", x.Subtitle)) : null); return new ViewItem(x.Title, (x.OriginName.Length > 0 ? L.Format("Von {0} · ", x.OriginName) : "") + x.Subtitle, "", x, icon ?? (x.Kind == "text" ? Icons.TextSymbol() : null), picture); }))).ToList();
             }
             else
-                rows = (await Task.WhenAll((await search.Search(query, token)).Select(async x => new ViewItem(x.Title, x.Detail, "", x, await Icons.ForAsync(x))))).ToList();
+                rows = (await Task.WhenAll((await search.Search(query, token)).Select(async x => new ViewItem(x.Title, L.Text(x.Detail), "", x, await Icons.ForAsync(x))))).ToList();
             if (!history && (query.Length == 0 || SearchService.Rank(L.Text("Verlauf"), query) > 0 || SearchService.Rank(L.Text("Zwischenablage"), query) > 0))
                 rows.Insert(0, HistoryAction());
             if (current != generation || token.IsCancellationRequested || editing)
@@ -393,7 +393,7 @@ sealed partial class LauncherWindow : Window
             Height = GridLength.Auto
         });
         Add(preview, new TextBlock { Text = row.Preview != null ? L.Text("Bildvorschau") : item.Kind == "files" ? L.Text("Dateien") : L.Text("Textvorschau"), FontSize = 13, FontWeight = FontWeights.Medium, Foreground = new SolidColorBrush(Color.FromRgb(226, 226, 233)) }, 0);
-        Add(preview, new TextBlock { Text = $"{ClipEntry.FormatBytes(item.Bytes)}  ·  {item.Created.ToLocalTime().ToString("g", System.Globalization.CultureInfo.CurrentCulture)}{(item.Pinned ? L.Text("  ·  Angeheftet") : "")}", FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(142, 143, 154)), Margin = new Thickness(0, 5, 0, 16) }, 1);
+        Add(preview, new TextBlock { Text = $"{ClipEntry.FormatBytes(item.Bytes)}  ·  {item.Created.ToLocalTime().ToString("g", L.Culture)}{(item.Pinned ? L.Text("  ·  Angeheftet") : "")}", FontSize = 10, Foreground = new SolidColorBrush(Color.FromRgb(142, 143, 154)), Margin = new Thickness(0, 5, 0, 16) }, 1);
         var document = new StackPanel();
         if (row.Preview != null)
             document.Children.Add(new Image { Source = row.Preview, MaxHeight = 180, Stretch = Stretch.Uniform, Margin = new Thickness(0, 0, 0, 12) });
@@ -650,11 +650,12 @@ sealed partial class LauncherWindow : Window
             Passed = immediate && first && entered && down && up && tabNavigates && settingsExclusive && tabs && noTyping && choiceCancelled && choiceApplied && cancelSheet && empty && emptyFits && hidden
         };
     }
-    public async Task RenderPreview(string path, bool clipboardMode, int selected = 0)
+    public async Task RenderPreview(string path, bool clipboardMode, int selected = 0, bool empty = false)
     {
         previewMode = true;
         ShowActivated = false;
         OpenMode(clipboardMode, false);
+        if (empty) input.Text = "qzxv-example";
         await UpdateResults();
         if (selected < list.Items.Count)
             list.SelectedIndex = selected;

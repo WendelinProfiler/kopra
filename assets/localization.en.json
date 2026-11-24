@@ -107,7 +107,7 @@
   "Weitere Schutzgrenzen  ⌃": "More limits  ⌃",
   "Weitere Schutzgrenzen  ⌄": "More limits  ⌄",
   "Weitere Schutzgrenzen": "More limits",
-  "Diese Grenzen sind bereits sinnvoll voreingestellt. Werden sie erreicht, pausiert die Sicherung neuer Inhalte.": "These limits have defaults. Kopra pauses capture when it reaches them.",
+  "Diese Grenzen sind bereits sinnvoll voreingestellt. Werden sie erreicht, pausiert die Sicherung neuer Inhalte.": "Kopra pauses capture when it reaches one of these limits.",
   "Auf dem Laufwerk freihalten": "Keep free on the drive",
   "Freihalten auf dem Laufwerk": "Keep free on the drive",
   "Stoppt neue Sicherungen, bevor dein Laufwerk voll wird.": "Stops saving new copies before the drive fills up.",
@@ -342,5 +342,7 @@
   "Ordnerverknüpfung konnte nicht geprüft werden.": "Could not check the folder link.",
   "Symbolische Verknüpfungen werden nicht rekursiv gesichert.": "Kopra does not follow symbolic links when saving folders.",
   "Verlauf-Datenbank konnte nicht geöffnet werden": "Could not open the history database",
-  "{0}     Suche öffnen\n{1}     Verlauf öffnen\nStrg + Tab     Suche und Verlauf wechseln\n↑ / ↓     Auswählen     ·     Enter     Öffnen / Einfügen\nEscape     Ausblenden": "{0}     Open search\n{1}     Open history\nCtrl + Tab     Switch search and history\n↑ / ↓     Select     ·     Enter     Open / Paste\nEscape     Hide"
+  "{0}     Suche öffnen\n{1}     Verlauf öffnen\nStrg + Tab     Suche und Verlauf wechseln\n↑ / ↓     Auswählen     ·     Enter     Öffnen / Einfügen\nEscape     Ausblenden": "{0}     Open search\n{1}     Open history\nCtrl + Tab     Switch search and history\n↑ / ↓     Select     ·     Enter     Open / Paste\nEscape     Hide",
+  " verwendet": " used",
+  "Suche und Verlauf wechseln": "Switch search and history"
 }

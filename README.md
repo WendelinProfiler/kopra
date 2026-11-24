@@ -6,6 +6,17 @@ Kopra opens apps, finds files and keeps a local clipboard history. Copied files 
 
 Use Kopra on Windows or macOS by itself. Pair a Mac with a Windows PC when you want new copies to appear on both.
 
+## Screenshots
+
+Clipboard history with example content.
+
+### Windows
+
+<img src="docs/screenshots/windows-history.png" alt="Kopra on Windows, showing clipboard history and an image preview" width="740">
+
+### macOS
+
+<img src="docs/screenshots/mac-history.png" alt="Kopra on macOS, showing clipboard history and an image preview" width="740">
 ## Downloads
 
 [Windows installer](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.3/Kopra-Setup-Windows-x64-preview.exe) · [Windows portable ZIP](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.3/Kopra-Windows-x64-preview.zip) · [Mac universal ZIP](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.3/Kopra-macOS-universal-preview.zip)
@@ -13,6 +24,7 @@ Use Kopra on Windows or macOS by itself. Pair a Mac with a Windows PC when you w
 These are beta previews. Windows is unsigned and the Mac app is not notarized. SHA-256 checksums are included on the [release page](https://github.com/WendelinProfiler/kopra/releases/tag/v1.0.0-beta.3).
 
 On Windows, run the installer or extract the portable ZIP. On Mac, extract the ZIP and move Kopra.app into Applications. Kopra runs from the Windows tray or Mac menu bar; click its icon to open search or settings. Starting automatically after login is optional.
+
 ## Getting started
 
 On Windows, the Windows key opens search. The first result opens your clipboard history. On Mac, the default search shortcut is Command + Space. If another app has reserved it, Kopra uses Control + Option + Space and tells you.
@@ -21,7 +33,9 @@ While Kopra is visible, it keeps keyboard focus. Its file pickers and other dial
 
 Change the search and history shortcuts in Settings → General. Press the combination you want. Kopra checks whether it can register it before saving the change.
 
-The current interface is in German. Windows 11 and macOS 13 or later are supported. The Mac package includes Apple silicon and Intel builds.
+Kopra starts in English. Choose English or Deutsch in Settings → General → Language. Each device keeps its own language setting.
+
+Windows 11 and macOS 13 or later are supported. The Mac package includes Apple silicon and Intel builds.
 
 ## Pairing a Mac and Windows PC
 
