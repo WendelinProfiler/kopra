@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/icon-256.png" width="112" height="112" alt="Kopra app icon"></p>
+
 # Kopra
 
 Kopra opens apps, finds files and keeps a local clipboard history. Copied files and folders have their own saved copies, so they remain available after the originals move.
