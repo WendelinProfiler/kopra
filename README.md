@@ -4,6 +4,13 @@ Kopra opens apps, finds files and keeps a local clipboard history. Copied files 
 
 Use Kopra on Windows or macOS by itself. Pair a Mac with a Windows PC when you want new copies to appear on both.
 
+## Downloads
+
+[Windows installer](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.3/Kopra-Setup-Windows-x64-preview.exe) · [Windows portable ZIP](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.3/Kopra-Windows-x64-preview.zip) · [Mac universal ZIP](https://github.com/WendelinProfiler/kopra/releases/download/v1.0.0-beta.3/Kopra-macOS-universal-preview.zip)
+
+These are beta previews. Windows is unsigned and the Mac app is not notarized. SHA-256 checksums are included on the [release page](https://github.com/WendelinProfiler/kopra/releases/tag/v1.0.0-beta.3).
+
+On Windows, run the installer or extract the portable ZIP. On Mac, extract the ZIP and move Kopra.app into Applications. Kopra runs from the Windows tray or Mac menu bar; click its icon to open search or settings. Starting automatically after login is optional.
 ## Getting started
 
 On Windows, the Windows key opens search. The first result opens your clipboard history. On Mac, the default search shortcut is Command + Space. If another app has reserved it, Kopra uses Control + Option + Space and tells you.
