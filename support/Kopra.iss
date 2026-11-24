@@ -22,15 +22,22 @@ RestartApplications=no
 [Languages]
 Name: "de"; MessagesFile: "compiler:Languages\German.isl"
 Name: "en"; MessagesFile: "compiler:Default.isl"
+[CustomMessages]
+en.DeviceSharing=Allow sharing with a Mac on your local network (administrator approval)
+de.DeviceSharing=Verbindung mit einem Mac im lokalen Netzwerk erlauben (Administratorfreigabe)
+en.LaunchKopra=Open Kopra
+de.LaunchKopra=Kopra starten
+en.NetworkSetupFailed=Could not allow incoming connections. Kopra still works locally.
+de.NetworkSetupFailed=Die Netzwerkfreigabe konnte nicht eingerichtet werden. Kopra funktioniert weiterhin lokal.
 [Tasks]
-Name: "devices"; Description: "Verbindung mit einem Mac im lokalen Netzwerk erlauben (Administratorfreigabe)"; Flags: unchecked
+Name: "devices"; Description: "{cm:DeviceSharing}"; Flags: unchecked
 [Files]
 Source: "..\artifacts\Kopra-Windows\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "Enable-DeviceSyncFirewall.ps1"; DestDir: "{app}\support"; Flags: ignoreversion
 [Icons]
 Name: "{userprograms}\Kopra"; Filename: "{app}\Kopra.exe"; IconFilename: "{app}\Kopra.exe"
 [Run]
-Filename: "{app}\Kopra.exe"; Description: "Kopra starten"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Kopra.exe"; Description: "{cm:LaunchKopra}"; Flags: nowait postinstall skipifsilent
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "Kopra"; Flags: uninsdeletevalue
 [UninstallRun]
@@ -42,6 +49,6 @@ begin
   if (CurStep = ssPostInstall) and WizardIsTaskSelected('devices') then begin
     Arguments := '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{app}\support\Enable-DeviceSyncFirewall.ps1') + '" -InstalledExe "' + ExpandConstant('{app}\Kopra.exe') + '" -Result "' + ExpandConstant('{tmp}\Kopra-network.json') + '"';
     if not ShellExec('runas', ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Arguments, '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
-      MsgBox('Die Netzwerkfreigabe wurde nicht eingerichtet. Kopra funktioniert weiterhin auf diesem PC allein.', mbInformation, MB_OK);
+      MsgBox(CustomMessage('NetworkSetupFailed'), mbInformation, MB_OK);
   end;
 end;
