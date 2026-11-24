@@ -453,6 +453,11 @@ sealed partial class LauncherWindow : Window
                 Shortcuts.Capture(e);
             return;
         }
+        if (SelectAllInEditor(e.Key == Key.System ? e.SystemKey : e.Key, Keyboard.Modifiers))
+        {
+            e.Handled = true;
+            return;
+        }
         if (e.Key == Key.Escape)
         {
             e.Handled = true;
@@ -463,7 +468,10 @@ sealed partial class LauncherWindow : Window
         }
         if (editing || Keyboard.FocusedElement is Button)
             return;
-        if (e.Key == Key.Down || e.Key == Key.Up)
+        // Keep native word deletion and modified caret navigation in text fields.
+        if (Keyboard.FocusedElement is TextBox && Keyboard.Modifiers != ModifierKeys.None && e.Key != Key.Tab)
+            return;
+        if (Keyboard.Modifiers == ModifierKeys.None && (e.Key == Key.Down || e.Key == Key.Up))
         {
             e.Handled = true;
             if (list.Items.Count > 0)
@@ -489,6 +497,13 @@ sealed partial class LauncherWindow : Window
             store.Delete(clip);
             await UpdateResults();
         }
+    }
+    internal static bool SelectAllInEditor(Key key, ModifierKeys modifiers)
+    {
+        if (key != Key.A || (modifiers != ModifierKeys.Control && modifiers != ModifierKeys.Alt) || Keyboard.FocusedElement is not TextBox editor)
+            return false;
+        editor.SelectAll();
+        return true;
     }
     async Task ExecuteSelected()
     {
@@ -585,6 +600,15 @@ sealed partial class LauncherWindow : Window
         await ExecuteSelected();
         await UpdateResults();
         bool entered = history && IsVisible;
+        input.Text = "Synthetic editable query"; input.Focus(); Keyboard.Focus(input);
+        bool controlSelectAll = SelectAllInEditor(System.Windows.Input.Key.A, ModifierKeys.Control) && input.SelectionLength == input.Text.Length;
+        input.Select(2, 0);
+        bool altSelectAll = SelectAllInEditor(System.Windows.Input.Key.A, ModifierKeys.Alt) && input.SelectionLength == input.Text.Length;
+        bool altGrUnchanged = !SelectAllInEditor(System.Windows.Input.Key.A, ModifierKeys.Control | ModifierKeys.Alt);
+        string originalQuery = input.Text; input.IsUndoEnabled = false; input.IsUndoEnabled = true; input.SelectedText = "Replacement"; input.Undo();
+        bool textUndo = input.Text == originalQuery; input.Redo();
+        bool textRedo = input.Text == "Replacement";
+        input.Text = ""; await UpdateResults();
         int start = list.SelectedIndex;
         void Key(Key key) => RaiseEvent(new KeyEventArgs(Keyboard.PrimaryDevice, PresentationSource.FromVisual(this), 0, key) { RoutedEvent = Keyboard.PreviewKeyDownEvent });
         Key(System.Windows.Input.Key.Down);
@@ -660,7 +684,12 @@ sealed partial class LauncherWindow : Window
             EscapeHides = hidden,
             BundledFont = bundledFont,
             PlaceholderClearOfCaret = placeholderClearOfCaret,
-            Passed = immediate && first && entered && down && up && tabNavigates && settingsExclusive && tabs && noTyping && choiceCancelled && choiceApplied && cancelSheet && empty && emptyFits && germanLanguage && englishLanguage && hidden && bundledFont && placeholderClearOfCaret
+            ControlSelectAll = controlSelectAll,
+            AltSelectAll = altSelectAll,
+            AltGrUnchanged = altGrUnchanged,
+            TextUndo = textUndo,
+            TextRedo = textRedo,
+            Passed = immediate && first && entered && down && up && tabNavigates && settingsExclusive && tabs && noTyping && choiceCancelled && choiceApplied && cancelSheet && empty && emptyFits && germanLanguage && englishLanguage && hidden && bundledFont && placeholderClearOfCaret && controlSelectAll && altSelectAll && altGrUnchanged && textUndo && textRedo
         };
     }
     public async Task RenderPreview(string path, bool clipboardMode, int selected = 0, bool empty = false)

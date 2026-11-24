@@ -24,8 +24,8 @@ static class Program
             return SyncLanTest.Run(args[1]);
         if (args.Length == 2 && args[0] == "--crypto-peer-check")
             return SyncRegression.VerifyPeer(args[1]);
-        if (args.Length == 2 && args[0] == "--diagnostics")
-            return Diagnostics.Run(args[1]);
+        if (args.Length is 2 or 3 && args[0] == "--diagnostics")
+            return Diagnostics.Run(args[1], args.Length == 3 ? args[2] : null);
         bool isolated = args.Contains("--preview") || args.Contains("--interaction-test") || args.Contains("--focus-test");
         using var mutex = new Mutex(true, isolated ? "Local\\Kopra.Preview." + Guid.NewGuid().ToString("N") : "Local\\Kopra." + Environment.UserName, out bool first);
         if (!first)

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Resolve Windows search results from their actual file URLs instead of translated display paths.
+- Preserve Mac search filenames containing line breaks and skip stale entries before limiting results.
+- Restore native text editing shortcuts in Mac panels and keep modified arrow navigation in text fields.
+- Support Control+A and Alt+A in Windows text fields without intercepting AltGr or word deletion.
+
 ## 1.0.0 beta 4
 
 - Choose English or German in Settings. New installs use English.

@@ -345,5 +345,10 @@
   "{0}     Suche öffnen\n{1}     Verlauf öffnen\nStrg + Tab     Suche und Verlauf wechseln\n↑ / ↓     Auswählen     ·     Enter     Öffnen / Einfügen\nEscape     Ausblenden": "{0}     Open search\n{1}     Open history\nCtrl + Tab     Switch search and history\n↑ / ↓     Select     ·     Enter     Open / Paste\nEscape     Hide",
   " verwendet": " used",
   "Suche und Verlauf wechseln": "Switch search and history",
-  "Lokal gespeichert · Gerätefreigabe aktiv": "Saved locally · Device sharing on"
+  "Lokal gespeichert · Gerätefreigabe aktiv": "Saved locally · Device sharing on",
+  "Bearbeiten": "Edit",
+  "Rückgängig": "Undo",
+  "Wiederholen": "Redo",
+  "Ausschneiden": "Cut",
+  "Alles markieren": "Select All"
 }

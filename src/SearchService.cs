@@ -135,11 +135,12 @@ sealed class SearchService(Preferences prefs, HistoryStore store)
             conn.CommandTimeout = 2;
             conn.Open("Provider=Search.CollatorDSO;Extended Properties='Application=Windows';");
             string escaped = query.Replace("'", "''").Replace("[", "[[]").Replace("%", "[%]").Replace("_", "[_]");
-            dynamic rows = recordset = conn.Execute("SELECT TOP 30 System.ItemNameDisplay, System.ItemPathDisplay FROM SYSTEMINDEX WHERE System.FileName LIKE '%" + escaped + "%' ORDER BY System.DateModified DESC");
+            dynamic rows = recordset = conn.Execute("SELECT TOP 30 System.ItemNameDisplay, System.ItemUrl FROM SYSTEMINDEX WHERE System.FileName LIKE '%" + escaped + "%' ORDER BY System.DateModified DESC");
             while (!rows.EOF && !token.IsCancellationRequested)
             {
-                string title = Convert.ToString(rows.Fields.Item(0).Value) ?? "", path = Convert.ToString(rows.Fields.Item(1).Value) ?? "";
-                if ((File.Exists(path) || Directory.Exists(path)) && !string.IsNullOrEmpty(title))
+                string title = Convert.ToString(rows.Fields.Item(0).Value) ?? "";
+                string? path = IndexedFilePath(Convert.ToString(rows.Fields.Item(1).Value) ?? "");
+                if (path != null && (File.Exists(path) || Directory.Exists(path)) && !string.IsNullOrEmpty(title))
                     result.Add(new(title, path, Directory.Exists(path) ? "Ordner" : "Datei", path));
                 rows.MoveNext();
             }
@@ -149,6 +150,15 @@ sealed class SearchService(Preferences prefs, HistoryStore store)
         catch (Exception e) when (e is not OutOfMemoryException) { IndexStatus = L.Text("Dateisuche derzeit nicht verfügbar"); }
         finally { if (recordset != null) { try { ((dynamic)recordset).Close(); } catch { } Marshal.FinalReleaseComObject(recordset); } if (connection != null) { try { ((dynamic)connection).Close(); } catch { } Marshal.FinalReleaseComObject(connection); } }
         return result;
+    }
+    // Display paths can contain translated shell names that do not exist on disk.
+    // ItemUrl carries the canonical location; Uri also decodes escaped names once.
+    internal static string? IndexedFilePath(string itemUrl)
+    {
+        if (!Uri.TryCreate(itemUrl, UriKind.Absolute, out var uri) || !uri.IsFile)
+            return null;
+        try { return uri.LocalPath; }
+        catch (InvalidOperationException) { return null; }
     }
     public void Open(SearchItem item)
     {

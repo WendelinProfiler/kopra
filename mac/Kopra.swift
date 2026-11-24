@@ -43,15 +43,22 @@ struct SettingsView: View {
         .confirmationDialog(L.text("Verlauf löschen?"),isPresented:$clearUnpinned){Button(L.text("Löschen"),role:.destructive){for entry in model.history.entries where !entry.pinned{model.history.remove(entry)};model.save();model.changed()}}message:{Text(L.text("Angeheftete Einträge und Originaldateien bleiben erhalten."))}.confirmationDialog(L.text("Gesamten Verlauf löschen?"),isPresented:$clearAll){Button(L.text("Alles löschen"),role:.destructive){for entry in model.history.entries{model.history.remove(entry)};NSPasteboard.general.clearContents();model.save();model.changed()}}message:{Text(L.text("Auch angeheftete Sicherungen werden gelöscht. Originaldateien bleiben erhalten."))}
     }
 }
-final class LauncherPanel:NSPanel {override var canBecomeKey:Bool{true};override var canBecomeMain:Bool{true}}
+final class LauncherPanel:NSPanel {
+    override var canBecomeKey:Bool{true}
+    override var canBecomeMain:Bool{true}
+    override func performKeyEquivalent(with event:NSEvent)->Bool {
+        TextEditing.handle(event,in:self) || super.performKeyEquivalent(with:event)
+    }
+}
 @MainActor final class AppDelegate:NSObject,NSApplicationDelegate {
     let model:AppModel;override init(){model=AppModel();super.init()};init(model:AppModel){self.model=model;super.init()};var item:NSStatusItem!;var hotKey:EventHotKeyRef?;var handler:EventHandlerRef?;var keyMonitor:Any?;var observer:NSObjectProtocol?;var languageObserver:NSObjectProtocol?
     func applicationDidFinishLaunching(_ notification:Notification){
         NSApp.setActivationPolicy(.accessory)
+        TextEditing.installMenu()
         let panel=LauncherPanel(contentRect:NSRect(x:0,y:0,width:740,height:590),styleMask:[.borderless],backing:.buffered,defer:false);panel.isFloatingPanel=true;panel.becomesKeyOnlyIfNeeded=false;panel.level = .floating;panel.isOpaque=false;panel.backgroundColor = .clear;panel.hasShadow=true;panel.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary];panel.hidesOnDeactivate=false
         let material=NSVisualEffectView();material.material = .hudWindow;material.blendingMode = .behindWindow;material.state = .active;material.wantsLayer=true;material.layer?.cornerRadius=18;material.layer?.masksToBounds=true;let host=NSHostingView(rootView:LauncherView(model:model).preferredColorScheme(.dark).tint(.blue).accentColor(.blue));host.translatesAutoresizingMaskIntoConstraints=false;material.addSubview(host);NSLayoutConstraint.activate([host.leadingAnchor.constraint(equalTo:material.leadingAnchor),host.trailingAnchor.constraint(equalTo:material.trailingAnchor),host.topAnchor.constraint(equalTo:material.topAnchor),host.bottomAnchor.constraint(equalTo:material.bottomAnchor)]);panel.contentView=material;model.panel=panel
         item=NSStatusBar.system.statusItem(withLength:NSStatusItem.squareLength);item.button?.image=NSImage(systemSymbolName:"magnifyingglass",accessibilityDescription:"Kopra");let menu=NSMenu();menu.addItem(withTitle:L.text("Suche öffnen"),action:#selector(openSearch),keyEquivalent:"");menu.addItem(withTitle:L.text("Zwischenablageverlauf"),action:#selector(openHistory),keyEquivalent:"");menu.addItem(withTitle:L.text("Einstellungen"),action:#selector(openSettings),keyEquivalent:"");menu.addItem(.separator());menu.addItem(withTitle:L.text("Beenden"),action:#selector(quit),keyEquivalent:"");for entry in menu.items{entry.target=self};item.menu=menu
-        languageObserver=NotificationCenter.default.addObserver(forName:Notification.Name("KopraLanguageChanged"),object:nil,queue:.main){[weak self] _ in Task{@MainActor in guard let menu=self?.item.menu else{return};let labels=[L.text("Suche öffnen"),L.text("Zwischenablageverlauf"),L.text("Einstellungen"),"",L.text("Beenden")];for (index,title) in labels.enumerated() where !title.isEmpty{menu.items[index].title=title}}}
+        languageObserver=NotificationCenter.default.addObserver(forName:Notification.Name("KopraLanguageChanged"),object:nil,queue:.main){[weak self] _ in Task{@MainActor in guard let menu=self?.item.menu else{return};TextEditing.installMenu();let labels=[L.text("Suche öffnen"),L.text("Zwischenablageverlauf"),L.text("Einstellungen"),"",L.text("Beenden")];for (index,title) in labels.enumerated() where !title.isEmpty{menu.items[index].title=title}}}
         model.shortcutService=MacShortcuts(model)
         keyMonitor=NSEvent.addLocalMonitorForEvents(matching:.keyDown){[weak self] event in guard let self else{return event};return self.handleKey(event)}
         observer=NotificationCenter.default.addObserver(forName:NSWindow.didResignKeyNotification,object:panel,queue:.main){[weak self] _ in Task{@MainActor in self?.model.ensureFocusOwnership()}}
@@ -63,7 +70,7 @@ final class LauncherPanel:NSPanel {override var canBecomeKey:Bool{true};override
         guard let panel=model.panel,panel.isVisible,(panel.isKeyWindow || event.windowNumber==panel.windowNumber) else{return event}
         if model.recordingShortcut{return event};if model.shortcutService?.matches(event,history:false)==true{model.toggle();return nil};if model.shortcutService?.matches(event,history:true)==true{model.toggle(history:true);return nil}
         if event.keyCode==53{model.hide();return nil}
-        if !model.settings{if event.keyCode==36 || event.keyCode==76{if !event.isARepeat{if event.modifierFlags.contains(.command),model.historyMode,model.rows.indices.contains(model.selected),let entry=model.rows[model.selected].entry{model.restore(entry,paste:true)}else{model.execute()}};return nil};if event.keyCode==125{model.move(1);return nil};if event.keyCode==126{model.move(-1);return nil}}
+        if !model.settings{if event.keyCode==36 || event.keyCode==76{if !event.isARepeat{if event.modifierFlags.contains(.command),model.historyMode,model.rows.indices.contains(model.selected),let entry=model.rows[model.selected].entry{model.restore(entry,paste:true)}else{model.execute()}};return nil};if event.modifierFlags.intersection([.command,.control,.option,.shift]).isEmpty {if event.keyCode==125{model.move(1);return nil};if event.keyCode==126{model.move(-1);return nil}}}
         return event
     }
     func application(_ application:NSApplication,open urls:[URL]){guard let url=urls.first,url.scheme=="kopra" else{return};model.open();model.settings=true;model.settingsTab=2;model.joinQr(url.absoluteString)}

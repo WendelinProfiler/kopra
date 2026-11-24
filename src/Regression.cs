@@ -75,6 +75,17 @@ static class Regression
             Check(SearchService.Rank("Explorer", "explorer") > SearchService.Rank("Explorer extras", "explorer"), "Exact search outranks prefix");
             Check(SearchService.Rank("Sound Einstellungen", "sound ein") > 0, "Multiword search");
             Check(SearchService.Rank("Bluetooth", "xyz") == 0, "Unrelated result excluded");
+            string indexedFolder = Path.Combine(root, "Übergabe mit Leerzeichen");
+            Directory.CreateDirectory(indexedFolder);
+            string indexedFile = Path.Combine(indexedFolder, "Design-installieren # 100%.bat");
+            File.WriteAllText(indexedFile, "@rem search fixture; never executed");
+            string indexedUrl = new Uri(indexedFile).AbsoluteUri;
+            Check(SearchService.IndexedFilePath(indexedUrl) == indexedFile, "Canonical indexed URL preserves Unicode, spaces, hash and percent");
+            Check(File.Exists(SearchService.IndexedFilePath(indexedUrl)), "Index result resolves to existing file independently of localized display path");
+            Check(SearchService.IndexedFilePath("file:C:/Users/Example/Downloads/test.bat") == @"C:\Users\Example\Downloads\test.bat", "Windows Search compact file URL resolves");
+            Check(SearchService.IndexedFilePath("file:///C:/Users/Example/100%2520.txt") == @"C:\Users\Example\100%20.txt", "Escaped filenames decode once");
+            Check(SearchService.IndexedFilePath("file://server/share/Folder%20name/test.txt") == @"\\server\share\Folder name\test.txt", "Indexed UNC paths preserve share");
+            Check(SearchService.IndexedFilePath("https://example.com/file.txt") == null && SearchService.IndexedFilePath("") == null, "Non-file index results are excluded");
             var prefs = new Preferences { Paused = true, SearchFolders = ["sample"], StorageLimitMb = 256 };
             prefs.Save(root);
             Check(Preferences.Load(root).Paused && Preferences.Load(root).StorageLimitMb == 256, "Preferences round trip");

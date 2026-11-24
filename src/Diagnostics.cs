@@ -3,7 +3,7 @@ namespace Kopra;
 
 static class Diagnostics
 {
-    public static int Run(string output)
+    public static int Run(string output, string? query = null)
     {
         string root = Path.Combine(Path.GetTempPath(), "Kopra-diagnostics-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
@@ -22,6 +22,7 @@ static class Diagnostics
                     icons++;
             }
             var microphone = search.Search("Mikrofon", default).GetAwaiter().GetResult();
+            var queried = query == null ? null : search.Search(query, default).GetAwaiter().GetResult();
             File.WriteAllText(output, JsonSerializer.Serialize(new
             {
                 RecentSuggestions = apps.Count,
@@ -30,6 +31,9 @@ static class Diagnostics
                 search.SettingsCount,
                 MicrophoneSettings = microphone.Count(x => x.Kind == "Einstellung"),
                 search.IndexStatus,
+                QueryResultCount = queried?.Count,
+                ExactFileFound = queried?.Any(x => x.Title.Equals(query, StringComparison.OrdinalIgnoreCase) && File.Exists(x.Path)),
+                QueryPathsExist = queried?.All(x => File.Exists(x.Path) || Directory.Exists(x.Path) || x.Kind is "App" or "Einstellung"),
                 RealIconsLoaded = icons
             }, new JsonSerializerOptions { WriteIndented = true }));
             return 0;

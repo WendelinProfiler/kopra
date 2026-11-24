@@ -8,10 +8,15 @@ import Vision
     let app=NSApplication.shared;app.setActivationPolicy(.accessory);var failure:Error?
     func exercise() async throws {
     let root=FileManager.default.temporaryDirectory.appendingPathComponent("Kopra-ui-tests-"+uniqueID());let history=MacHistory(root:root);history.preferences.reserveMB=0;defer{try? FileManager.default.removeItem(at:root)}
+    TextEditing.installMenu()
     _ = try history.insert(SharedClip(id:uniqueID(),kind:"text",title:"Test",text:"Nur künstliche Testdaten",created:milliseconds(),files:[]),origin:"")
     let model=AppModel(history:history,loadPairing:false);let delegate=AppDelegate(model:model)
     let panel=LauncherPanel(contentRect:NSRect(x:-2000,y:-2000,width:740,height:500),styleMask:[.borderless],backing:.buffered,defer:false);model.panel=panel;panel.contentView=NSHostingView(rootView:LauncherView(model:model));model.search();panel.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true);try await Task.sleep(nanoseconds:100_000_000)
     print("UI_PRE_ENTER",model.rows.first?.id=="history",panel.isKeyWindow,panel.isVisible);guard model.rows.first?.id=="history",let enter=NSEvent.keyEvent(with:.keyDown,location:.zero,modifierFlags:[],timestamp:0,windowNumber:panel.windowNumber,context:nil,characters:"\r",charactersIgnoringModifiers:"\r",isARepeat:false,keyCode:36) else{throw SharedError.invalid}
+    let editField=NSTextField(frame:NSRect(x:20,y:20,width:320,height:30));editField.stringValue="Synthetic editable query";editField.isEditable=true;editField.isSelectable=true;panel.contentView?.addSubview(editField);let editingFocused=panel.makeFirstResponder(editField);print("UI_EDIT_FOCUS",editingFocused,editField.currentEditor() != nil,String(describing:type(of:panel.firstResponder)))
+    guard let editor=editField.currentEditor(),let selectAll=NSEvent.keyEvent(with:.keyDown,location:.zero,modifierFlags:[.command],timestamp:0,windowNumber:panel.windowNumber,context:nil,characters:"a",charactersIgnoringModifiers:"a",isARepeat:false,keyCode:0),panel.performKeyEquivalent(with:selectAll),editor.selectedRange.length==editField.stringValue.utf16.count else{print("UI_EDIT_SELECT_ALL_FAILED");throw SharedError.invalid}
+    let editActions=Set((NSApp.mainMenu?.items.flatMap{$0.submenu?.items ?? []} ?? []).compactMap{$0.action.map{NSStringFromSelector($0)}});guard ["undo:","redo:","cut:","copy:","paste:","selectAll:"].allSatisfy({editActions.contains($0)}) else{print("UI_EDIT_MENU_FAILED");throw SharedError.invalid}
+    editField.removeFromSuperview();panel.makeFirstResponder(panel.contentView);print("PASS NATIVE EDITING: COMMAND_A_SELECTS_ALL, STANDARD_EDIT_COMMANDS_REGISTERED")
     let handled=delegate.handleKey(enter)==nil;print("UI_POST_ENTER",handled,model.historyMode,panel.isVisible);guard handled,model.historyMode,panel.isVisible else{throw SharedError.invalid}
     let file=try history.insert(SharedClip(id:uniqueID(),kind:"files",title:"Notiz.txt",text:"",created:milliseconds(),files:[SharedFile(path:"Notiz.txt",directory:false,data:Data("Synthetischer Dateitest".utf8).base64EncodedString())]),origin:"")
     model.search();guard let fileIndex=model.rows.firstIndex(where:{$0.entry?.id==file.id}) else{throw SharedError.invalid};model.selected=fileIndex
@@ -77,6 +82,13 @@ func selfTest(_ fixture: String) throws {
     let fm=FileManager.default;let root=fm.temporaryDirectory.appendingPathComponent("Kopra-tests-"+uniqueID());try fm.createDirectory(at:root,withIntermediateDirectories:true);defer{try? fm.removeItem(at:root)}
     var count=0;func check(_ value:Bool) throws{count+=1;if !value{throw SharedError.invalid}}
     try check(MacPreferences().language=="en")
+    let searchRoot=FileManager.default.temporaryDirectory.appendingPathComponent("Kopra-search-tests-"+uniqueID());try FileManager.default.createDirectory(at:searchRoot,withIntermediateDirectories:true);defer{try? FileManager.default.removeItem(at:searchRoot)}
+    let searchFile=searchRoot.appendingPathComponent("Übergabe # 100%\nNotiz.txt");try Data("test".utf8).write(to:searchFile)
+    let missing=searchRoot.appendingPathComponent("deleted.txt").path
+    let framed=Data(([missing,searchFile.path,searchFile.path].joined(separator:"\0")+"\0").utf8)
+    try check(FileSearch.urls(framed,limit:1).first?.path==searchFile.path)
+    try check(FileSearch.urls(framed).count==1)
+    try check(FileSearch.urls(Data("https://example.com\0relative.txt\0".utf8)).isEmpty)
     L.use("en");try check(L.text("Verlauf")=="History");try check(L.text("Keine Ergebnisse")=="No results")
     try check(L.format("Gültig für {0}:{1:D2} · Beide Geräte im selben Netzwerk",2,7).contains("2:07"))
     var localizedPreferences=MacPreferences();localizedPreferences.language="de"
