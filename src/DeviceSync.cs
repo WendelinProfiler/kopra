@@ -190,7 +190,15 @@ sealed class DeviceSync : IDisposable
         Start();
         if (listener == null)
             throw new IOException("Die Geräteverbindung konnte nicht gestartet werden.");
-        var addresses = Dns.GetHostAddresses(Dns.GetHostName()).Where(x => x.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(x) && x.GetAddressBytes()[0] != 169).ToArray();
+        var addresses = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+            .Where(adapter => adapter.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up &&
+                adapter.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Loopback &&
+                adapter.NetworkInterfaceType != System.Net.NetworkInformation.NetworkInterfaceType.Tunnel)
+            .OrderByDescending(adapter => adapter.GetIPProperties().GatewayAddresses.Any(gateway => !gateway.Address.Equals(IPAddress.Any)))
+            .SelectMany(adapter => adapter.GetIPProperties().UnicastAddresses.Select(item => item.Address))
+            .Where(address => address.AddressFamily == AddressFamily.InterNetwork)
+            .Where(address => { var b = address.GetAddressBytes(); return b[0] == 10 || b[0] == 192 && b[1] == 168 || b[0] == 172 && b[1] >= 16 && b[1] <= 31; })
+            .Distinct().ToArray();
         if (addresses.Length == 0)
             throw new IOException("Kein lokales Netzwerk gefunden.");
         return Pairing.Begin(addresses[0].ToString());

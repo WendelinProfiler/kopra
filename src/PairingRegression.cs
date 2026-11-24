@@ -95,6 +95,11 @@ static class PairingRegression
             code = PairingCrypto.Code(PairingCrypto.Derive(aShared, token, session))
         };
         File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "pair-v2-fixture.json"), JsonSerializer.Serialize(fixture));
+        using (var generator = new QRCoder.QRCodeGenerator())
+        using (var data = generator.CreateQrCode(qr, QRCoder.QRCodeGenerator.ECCLevel.Q))
+        using (var png = new QRCoder.PngByteQRCode(data))
+            File.WriteAllBytes(Path.Combine(AppContext.BaseDirectory, "qr-test.png"), png.GetGraphic(8));
+        File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "qr-test.txt"), qr);
         Check(Shortcuts.Valid(77, 3) && !Shortcuts.Valid(17, 0) && !Shortcuts.Valid(76, 8), "hotkey validation");
         Check(Shortcuts.Label(77, 3) == "Strg + Alt + M", "hotkey label");
         return count;

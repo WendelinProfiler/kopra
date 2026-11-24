@@ -9,7 +9,8 @@ struct MacPreferences: Codable {
     var device = uniqueID(); var since = milliseconds(); var textDays = 30; var fileDays = 7; var budgetMB = 2048; var maximumMB = 256; var reserveMB = 5120; var maximumEntries = 2000
     var paused = false; var sharedPaste = true; var excluded = ["com.1password.1password","com.bitwarden.desktop","org.keepassxc.keepassxc"]
     var sharingEnabled=false;var searchKey:UInt32=49;var searchModifiers:UInt32=256;var historyKey:UInt32=9;var historyModifiers:UInt32=768;var searchLabel="⌘Leertaste";var historyLabel="⌘⇧V"
-    var received = [String](); var sent = [String](); var lastWindowsAck = ""    init(){}
+    var received = [String](); var sent = [String](); var lastWindowsAck = ""
+    init(){}
     enum CodingKeys:String,CodingKey{case device,since,textDays,fileDays,budgetMB,maximumMB,reserveMB,maximumEntries,paused,sharedPaste,excluded,received,sent,lastWindowsAck,sharingEnabled,searchKey,searchModifiers,historyKey,historyModifiers,searchLabel,historyLabel}
     init(from decoder:Decoder) throws {
         self.init();let c=try decoder.container(keyedBy:CodingKeys.self)

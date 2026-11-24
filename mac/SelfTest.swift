@@ -2,6 +2,7 @@ import Foundation
 import CryptoKit
 import AppKit
 import SwiftUI
+import Vision
 
 @MainActor func uiSelfTest() throws {
     let app=NSApplication.shared;app.setActivationPolicy(.accessory);var failure:Error?
@@ -57,6 +58,11 @@ func selfTest(_ fixture: String) throws {
     let fm=FileManager.default;let root=fm.temporaryDirectory.appendingPathComponent("Kopra-tests-"+uniqueID());try fm.createDirectory(at:root,withIntermediateDirectories:true);defer{try? fm.removeItem(at:root)}
     var count=0;func check(_ value:Bool) throws{count+=1;if !value{throw SharedError.invalid}}
     let json=try JSONSerialization.jsonObject(with:Data(contentsOf:URL(fileURLWithPath:fixture))) as! [String:String];let key=Data(base64Encoded:json["key"]!)!;let plain=Data(base64Encoded:json["plain"]!)!;let sealed=Data(base64Encoded:json["sealedBox"]!)!;try check(try SharedProtocol.open(sealed,key:key)==plain);try check(try SharedProtocol.open(SharedProtocol.seal(plain,key:key),key:key)==plain)
+    let fixtureFolder=URL(fileURLWithPath:fixture).deletingLastPathComponent()
+    let qrRequest=VNDetectBarcodesRequest();qrRequest.symbologies=[.qr]
+    try VNImageRequestHandler(url:fixtureFolder.appendingPathComponent("qr-test.png"),options:[:]).perform([qrRequest])
+    let qrExpected=try String(contentsOf:fixtureFolder.appendingPathComponent("qr-test.txt"),encoding:.utf8)
+    try check(qrRequest.results?.first?.payloadStringValue==qrExpected)
     let pairFile=URL(fileURLWithPath:fixture).deletingLastPathComponent().appendingPathComponent("pair-v2-fixture.json")
     let pair=try JSONSerialization.jsonObject(with:Data(contentsOf:pairFile)) as! [String:String]
     let privateKey=try P256.KeyAgreement.PrivateKey(rawRepresentation:Data(base64Encoded:pair["privateKey"]!)!);let peer=try P256.KeyAgreement.PublicKey(x963Representation:Data(base64Encoded:pair["peerPublic"]!)!);let secret=try privateKey.sharedSecretFromKeyAgreement(with:peer);let token=Data(base64Encoded:pair["token"]!)!;let derived=PairV2.derive(secret,token:token,session:pair["session"]!)

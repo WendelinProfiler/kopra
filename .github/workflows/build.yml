@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 10.0.404
       - name: Build and run regression tests
         shell: pwsh
         run: ./support/Build.ps1
@@ -28,6 +28,8 @@ jobs:
           path: |
             build/sync-fixture.json
             build/pair-v2-fixture.json
+            build/qr-test.png
+            build/qr-test.txt
             build/self-test-result.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
