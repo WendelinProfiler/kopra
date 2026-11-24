@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 beta 3
+
+- Keep keyboard focus while the app is visible on Windows and Mac.
+- Preserve focus in owned dialogs and restore it when those dialogs close.
+- Release focus when hiding the app or opening a result.
+- Isolate native UI tests from installed preferences and history.
+
 ## 1.0.0 beta 2
 
 - Pair a Mac by entering a six-digit code. Kopra finds the Windows PC on the local network.

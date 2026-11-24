@@ -221,7 +221,7 @@ sealed partial class LauncherWindow : Window
         list.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(ScrollActivity));
         settings.AddHandler(ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(ScrollActivity));
         PreviewKeyDown += OnKey;
-        Deactivated += (_, _) => { if (!previewMode && !activating) Hide(); };
+        InitializeFocusOwnership();
         clipboard.Changed += () => Dispatcher.InvokeAsync(async () => { if (history && IsVisible && !editing) await UpdateResults(); });
         clipboard.Status += message => Dispatcher.InvokeAsync(() => { status.Text = message; if (message.Length > 0) footer.Text = message.Length > 54 ? message[..54] + "…" : message; else footer.Text = "Nur auf diesem Rechner"; });
     }
@@ -543,27 +543,35 @@ sealed partial class LauncherWindow : Window
     public async Task<object> TestFocus()
     {
         nint previous = Native.GetForegroundWindow();
-        var background = new Window { Title = "Kopra Fokus-Test", Width = 240, Height = 100, WindowStartupLocation = WindowStartupLocation.CenterScreen, Content = new TextBox { Text = "Eigenes Testfenster" } };
-        background.Show();
-        Native.Activate(new WindowInteropHelper(background).Handle);
+        using var peer = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!, "--focus-test-peer") { UseShellExecute = false })!;
+        peer.WaitForInputIdle(5000); peer.Refresh();
+        for (int wait = 0; wait < 40 && peer.MainWindowHandle == 0 && !peer.HasExited; wait++) { await Task.Delay(50); peer.Refresh(); }
+        var peerWindow = peer.MainWindowHandle;
+        if (peerWindow == 0) throw new IOException("Focus fixture did not open");
         try
         {
+            Native.Activate(peerWindow);
             OpenMode(false);
-            await Dispatcher.InvokeAsync(() => { }, System.Windows.Threading.DispatcherPriority.ContextIdle);
-            await Task.Delay(120);
+            await Task.Delay(250);
             var hwnd = new WindowInteropHelper(this).Handle;
-            return new
-            {
-                WindowVisible = IsVisible,
-                ForegroundOwned = Native.GetForegroundWindow() == hwnd,
-                InputFocused = input.IsKeyboardFocusWithin,
-                HistorySelected = list.SelectedItem is ViewItem { Value: LauncherAction.History },
-                AlphaWindow = Native.IsLayered(hwnd),
-                NativeFramePresent = Native.HasNativeFrame(hwnd),
-                WindowChromePresent = System.Windows.Shell.WindowChrome.GetWindowChrome(this) != null
-            };
+            bool initial = IsVisible && Native.GetForegroundWindow() == hwnd && input.IsKeyboardFocusWithin;
+            bool recovered = true;
+            for (int i = 0; i < 3; i++)
+            { Native.Activate(peerWindow); await Task.Delay(350); recovered &= IsVisible && Native.GetForegroundWindow() == hwnd && input.IsKeyboardFocusWithin; }
+            ShowSettings(); Native.Activate(peerWindow); await Task.Delay(350);
+            bool settingsFocus = IsVisible && Native.GetForegroundWindow() == hwnd && IsKeyboardFocusWithin && Keyboard.FocusedElement is UIElement { IsVisible: true };
+            var field = new TextBox { Text = "Eigener Dialog" };
+            var dialog = new Window { Title = "Kopra Dialogtest", Owner = this, Width = 220, Height = 90, Content = field };
+            dialog.Show(); Native.Activate(new WindowInteropHelper(dialog).Handle); field.Focus(); Keyboard.Focus(field);
+            await Task.Delay(350);
+            bool dialogPreserved = dialog.IsActive && field.IsKeyboardFocusWithin;
+            dialog.Close(); await Task.Delay(350);
+            bool dialogReturned = IsVisible && Native.GetForegroundWindow() == hwnd && IsKeyboardFocusWithin;
+            Hide(); Native.Activate(peerWindow); await Task.Delay(350);
+            bool hiddenReleased = !IsVisible && Native.GetForegroundWindow() == peerWindow;
+            return new { InitialFocus = initial, RecoversAfterThreeFocusLosses = recovered, SettingsFocused = settingsFocus, OwnedDialogKeepsFocus = dialogPreserved, FocusReturnsAfterDialog = dialogReturned, HiddenReleasesFocus = hiddenReleased, NativeFramePresent = Native.HasNativeFrame(hwnd), Passed = initial && recovered && settingsFocus && dialogPreserved && dialogReturned && hiddenReleased };
         }
-        finally { Hide(); background.Close(); Native.SetForegroundWindow(previous); }
+        finally { Hide(); if (!peer.HasExited) { peer.CloseMainWindow(); if (!peer.WaitForExit(1000)) peer.Kill(); } Native.SetForegroundWindow(previous); }
     }
     public async Task<object> TestInteraction()
     {

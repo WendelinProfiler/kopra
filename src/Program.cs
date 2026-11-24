@@ -12,6 +12,7 @@ static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        if (args.Contains("--focus-test-peer")) return FocusTestPeer.Run();
         if (args.Contains("--self-test"))
             return Regression.Run();
         if (args.Length == 2 && args[0] == "--generate-icon")
@@ -41,14 +42,15 @@ static class Program
         }
         if (args.Contains("--quit-safe"))
             return 0;
-        Directory.CreateDirectory(Root);
+        string activeRoot = isolated ? Path.Combine(Path.GetTempPath(), "Kopra-ui-" + Guid.NewGuid().ToString("N")) : Root;
+        Directory.CreateDirectory(activeRoot);
         var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown };
-        app.DispatcherUnhandledException += (_, e) => { try { File.AppendAllText(Path.Combine(Root, "errors.log"), DateTime.UtcNow.ToString("O") + " " + e.Exception.GetType().Name + " " + e.Exception.StackTrace + Environment.NewLine); } catch { } e.Handled = true; Notify("Kopra: Aktion konnte nicht abgeschlossen werden"); };
-        Preferences prefs = Preferences.Load(Root);
-        using var store = new HistoryStore(isolated ? Path.Combine(Path.GetTempPath(), "Kopra-preview") : Root, isolated ? (args.Contains("--preview") ? new Preferences { MinFreeDiskMb = 0 } : null) : prefs);
+        app.DispatcherUnhandledException += (_, e) => { try { File.AppendAllText(Path.Combine(activeRoot, "errors.log"), DateTime.UtcNow.ToString("O") + " " + e.Exception.GetType().Name + " " + e.Exception.StackTrace + Environment.NewLine); } catch { } e.Handled = true; Notify("Kopra: Aktion konnte nicht abgeschlossen werden"); };
+        Preferences prefs = isolated ? new Preferences { MinFreeDiskMb = 0, AutoStart = false } : Preferences.Load(Root);
+        using var store = new HistoryStore(activeRoot, prefs);
         using var clipboard = new ClipboardService(store, prefs);
         var search = new SearchService(prefs, store);
-        var window = new LauncherWindow(store, prefs, search, clipboard, Root);
+        var window = new LauncherWindow(store, prefs, search, clipboard, activeRoot);
         app.MainWindow = window;
         using var sync = isolated ? null : new DeviceSync(Root, store, clipboard, prefs);
         window.DeviceSync = sync;
@@ -91,9 +93,9 @@ static class Program
             if (args.Contains("--focus-test"))
             {
                 string output = args.SkipWhile(x => x != "--focus-test").Skip(1).First();
-                var result = await window.TestFocus();
-                File.WriteAllText(output, System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
-                app.Shutdown();
+                try { var result = await window.TestFocus(); File.WriteAllText(output, System.Text.Json.JsonSerializer.Serialize(result, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })); }
+                catch (Exception error) { File.WriteAllText(output, System.Text.Json.JsonSerializer.Serialize(new { Passed = false, Error = error.GetType().Name })); Environment.ExitCode = 1; }
+                finally { app.Shutdown(); }
                 return;
             }
             if (args.Contains("--interaction-test"))

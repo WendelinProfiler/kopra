@@ -6,11 +6,11 @@ import Vision
 
 @MainActor func uiSelfTest() throws {
     let app=NSApplication.shared;app.setActivationPolicy(.accessory);var failure:Error?
-    func exercise() throws {
+    func exercise() async throws {
     let root=FileManager.default.temporaryDirectory.appendingPathComponent("Kopra-ui-tests-"+uniqueID());let history=MacHistory(root:root);history.preferences.reserveMB=0;defer{try? FileManager.default.removeItem(at:root)}
     _ = try history.insert(SharedClip(id:uniqueID(),kind:"text",title:"Test",text:"Nur künstliche Testdaten",created:milliseconds(),files:[]),origin:"")
     let model=AppModel(history:history,loadPairing:false);let delegate=AppDelegate(model:model)
-    let panel=LauncherPanel(contentRect:NSRect(x:-2000,y:-2000,width:740,height:500),styleMask:[.borderless],backing:.buffered,defer:false);model.panel=panel;panel.contentView=NSHostingView(rootView:LauncherView(model:model));model.search();panel.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true);RunLoop.current.run(until:Date().addingTimeInterval(0.1))
+    let panel=LauncherPanel(contentRect:NSRect(x:-2000,y:-2000,width:740,height:500),styleMask:[.borderless],backing:.buffered,defer:false);model.panel=panel;panel.contentView=NSHostingView(rootView:LauncherView(model:model));model.search();panel.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true);try await Task.sleep(nanoseconds:100_000_000)
     print("UI_PRE_ENTER",model.rows.first?.id=="history",panel.isKeyWindow,panel.isVisible);guard model.rows.first?.id=="history",let enter=NSEvent.keyEvent(with:.keyDown,location:.zero,modifierFlags:[],timestamp:0,windowNumber:panel.windowNumber,context:nil,characters:"\r",charactersIgnoringModifiers:"\r",isARepeat:false,keyCode:36) else{throw SharedError.invalid}
     let handled=delegate.handleKey(enter)==nil;print("UI_POST_ENTER",handled,model.historyMode,panel.isVisible);guard handled,model.historyMode,panel.isVisible else{throw SharedError.invalid}
     let file=try history.insert(SharedClip(id:uniqueID(),kind:"files",title:"Notiz.txt",text:"",created:milliseconds(),files:[SharedFile(path:"Notiz.txt",directory:false,data:Data("Synthetischer Dateitest".utf8).base64EncodedString())]),origin:"")
@@ -20,9 +20,18 @@ import Vision
     panel.makeKeyAndOrderFront(nil)
     guard let escape=NSEvent.keyEvent(with:.keyDown,location:.zero,modifierFlags:[],timestamp:0,windowNumber:panel.windowNumber,context:nil,characters:"",charactersIgnoringModifiers:"",isARepeat:false,keyCode:53) else{throw SharedError.invalid}
     _ = delegate.handleKey(escape);guard !panel.isVisible else{throw SharedError.invalid};print("PASS NATIVE UI: ENTER_OPENS_HISTORY_AND_STAYS_VISIBLE, ESCAPE_HIDES")
+    if let finder=NSWorkspace.shared.runningApplications.first(where:{$0.bundleIdentifier=="com.apple.finder"}),let screen=NSScreen.main {
+        let area=screen.visibleFrame;panel.setFrame(NSRect(x:area.midX-370,y:area.midY-230,width:740,height:460),display:true);panel.makeKeyAndOrderFront(nil);model.beginFocusOwnership()
+        defer{model.hide()}
+        for _ in 0..<3{finder.activate(options:[]);try await Task.sleep(nanoseconds:400_000_000);guard NSApp.isActive,panel.isKeyWindow else{print("FOCUS_FAILED_EXTERNAL_RECOVERY",NSApp.isActive,panel.isKeyWindow);throw SharedError.invalid}}
+        let dialog=LauncherPanel(contentRect:NSRect(x:area.midX-120,y:area.midY-40,width:240,height:80),styleMask:[.titled],backing:.buffered,defer:false);let field=NSTextField(string:"Eigener Testdialog");dialog.contentView=field;panel.addChildWindow(dialog,ordered:.above);dialog.makeKeyAndOrderFront(nil);dialog.makeFirstResponder(field);try await Task.sleep(nanoseconds:300_000_000);guard dialog.isKeyWindow else{print("FOCUS_FAILED_OWN_DIALOG");throw SharedError.invalid};panel.removeChildWindow(dialog);dialog.orderOut(nil);model.ensureFocusOwnership();guard panel.isKeyWindow else{print("FOCUS_FAILED_DIALOG_RETURN");throw SharedError.invalid}
+        let picker=NSOpenPanel();picker.beginSheetModal(for:panel){_ in};try await Task.sleep(nanoseconds:300_000_000);model.ensureFocusOwnership();guard panel.attachedSheet != nil else{print("FOCUS_FAILED_FILE_PICKER");throw SharedError.invalid};picker.cancel(nil);try await Task.sleep(nanoseconds:200_000_000);model.ensureFocusOwnership();guard panel.isKeyWindow else{print("FOCUS_FAILED_DIALOG_RETURN");throw SharedError.invalid}
+        model.hide();finder.activate(options:[]);try await Task.sleep(nanoseconds:300_000_000);guard !panel.isVisible,NSWorkspace.shared.frontmostApplication?.bundleIdentifier=="com.apple.finder" else{print("FOCUS_FAILED_HIDE_RELEASE");throw SharedError.invalid}
+        print("PASS FOCUS: THREE_EXTERNAL_LOSSES, OWNED_DIALOG, FILE_PICKER, RETURN_AFTER_DIALOG, RELEASE_WHEN_HIDDEN")
+    }else{throw SharedError.unavailable}
     }
-    DispatchQueue.main.async {
-        do{try exercise()}catch{failure=error}
+    Task { @MainActor in
+        do{try await exercise()}catch{failure=error}
         app.stop(nil)
         if let event=NSEvent.otherEvent(with:.applicationDefined,location:.zero,modifierFlags:[],timestamp:0,windowNumber:0,context:nil,subtype:0,data1:0,data2:0){app.postEvent(event,atStart:true)}
     }

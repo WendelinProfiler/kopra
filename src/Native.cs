@@ -16,13 +16,15 @@ static class Native
     [DllImport("user32")] static extern bool ShowWindow(nint hwnd, int command);
     [DllImport("user32")] static extern bool IsHungAppWindow(nint hwnd);
     [DllImport("kernel32")] static extern uint GetCurrentThreadId();
-    public static bool Activate(nint hwnd)
+    [DllImport("user32")] public static extern nint GetLastActivePopup(nint hwnd);
+    [DllImport("user32")] public static extern bool IsWindowVisible(nint hwnd);
+    public static bool Activate(nint hwnd, bool focus = true)
     {
         ShowWindow(hwnd, 5);
         if (GetForegroundWindow() == hwnd)
         {
             SetActiveWindow(hwnd);
-            SetFocus(hwnd);
+            if (focus) SetFocus(hwnd);
             return true;
         }
         uint current = GetCurrentThreadId(), foreground = GetWindowThreadProcessId(GetForegroundWindow(), out _);
@@ -34,7 +36,7 @@ static class Native
             BringWindowToTop(hwnd);
             SetForegroundWindow(hwnd);
             SetActiveWindow(hwnd);
-            SetFocus(hwnd);
+            if (focus) SetFocus(hwnd);
         }
         finally { if (attached) AttachThreadInput(current, foreground, false); }
         return GetForegroundWindow() == hwnd;

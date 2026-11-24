@@ -262,6 +262,7 @@ sealed partial class LauncherWindow
             return false;
         content.Children.Remove(confirmation);
         confirmation = null;
+        Dispatcher.BeginInvoke(RestoreContentFocus, System.Windows.Threading.DispatcherPriority.Input);
         return true;
     }
     void Confirm(string title, string detail, Func<Task> action)

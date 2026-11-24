@@ -8,6 +8,8 @@ Use Kopra on Windows or macOS by itself. Pair a Mac with a Windows PC when you w
 
 On Windows, the Windows key opens search. The first result opens your clipboard history. On Mac, the default search shortcut is Command + Space. If another app has reserved it, Kopra uses Control + Option + Space and tells you.
 
+While Kopra is visible, it keeps keyboard focus. Its file pickers and other dialogs keep their own input focus. Press Escape to hide Kopra; opening a result or pasting an entry also releases focus.
+
 Change the search and history shortcuts in Settings → General. Press the combination you want. Kopra checks whether it can register it before saving the change.
 
 The current interface is in German. Windows 11 and macOS 13 or later are supported. The Mac package includes Apple silicon and Intel builds.
